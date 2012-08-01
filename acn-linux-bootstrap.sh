@@ -12,7 +12,7 @@ cd /opt
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
 
-PF="/etc/profile.d/acn-linux-manual.sh"
+F="/etc/profile.d/acn-linux-manual.sh"
 echo "Install $F"
 
 > $F
@@ -22,7 +22,7 @@ echo 'pathmunge /opt/acn-linux/bin' >> $F
 F="/usr/lib64/python2.6/site-packages/acn-linux-manual.pth"
 echo "Install $F"
 
-> $f
+> $F
 echo '/opt/acn-linux/python2.6/' >> $F
 
 echo "Done!"
