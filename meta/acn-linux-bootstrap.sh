@@ -7,8 +7,8 @@ rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-7.noarch.r
 echo 'Install IUS'
 rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-10.ius.el6.noarch.rpm
 
-echo 'Install git and python32'
-yum install git python32 --enablerepo=ius-testing
+echo 'Install [git, vim-enhanced, python32]'
+yum install git vim-enhanced python32 --enablerepo=ius-testing
 
 echo 'cd to /opt'
 cd /opt

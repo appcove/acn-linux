@@ -1,0 +1,138 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+
+TEMPLATE = '''*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+
+# accept traffic from the local interface
+-A INPUT -i lo -j ACCEPT
+
+# allow pings
+-A INPUT -p icmp -j ACCEPT
+
+#CUSTOM#
+
+# allow related, established traffic
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# allow all outgoing trafic leaving through the loopback interface
+-A OUTPUT -o lo -j ACCEPT
+
+# Commit changes
+COMMIT
+
+'''
+
+RULES = []
+
+
+def AddRules(service, ports, protocols=('tcp',)):
+  while True:
+    print()
+    s = GetInput('<enter> to skip.  Source address for '+service+' or "any": ')
+    
+    if s == '':
+      print()
+      break
+    
+    elif s == 'any':
+      print()
+      RULES.append('# allow ' + service + ' from anywhere')
+      for port in ports:
+        for protocol in protocols:
+          rule = '-A INPUT -p ' + protocol + ' -m ' + protocol + ' --dport ' + str(port) + ' -j ACCEPT'
+          RULES.append(rule)
+          print('  Added rule: ' + rule)
+      RULES.append('')
+      print()
+      break
+
+    elif re.match(r'^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(\/[0-9]{1,2})?$', s):
+      print()
+      RULES.append('# allow ' + service + ' from ' + s)
+      for port in ports:
+        for protocol in protocols:
+          rule = '-A INPUT -p ' + protocol + ' -m ' + protocol + ' -s ' + s + ' --dport ' + str(port) + ' -j ACCEPT'
+          RULES.append(rule)
+          print('  Added rule: ' + rule)
+      RULES.append('')
+      print()
+    else:
+      print()
+      print('  Error in input!')
+      print()
+      continue
+
+###############################################################################
+
+print()
+print("This tool will assist you in building a tight and effective firewall.")
+print("You may press ctrl+c to abort at any time")
+print()
+
+try:
+
+  print('======= ssh =========')
+  AddRules('ssh', [22])
+
+  print('======= http/https =========')
+  AddRules('http/https', [80,443])
+
+  print('======= mysql =========')
+  AddRules('mysql', [3306])
+
+  print('======= postgresql =========')
+  AddRules('pgsql', [5432])
+
+  print('======= samba =========')
+  AddRules('samba', [137,138,139,445], ('tcp', 'udp'))
+
+except KeyboardInterrupt:
+  Die('\n\n\n*** User Abort ***\n\n')
+
+
+IPTABLES = TEMPLATE.replace('#CUSTOM#\n', str.join('\n', RULES))
+
+###############################################################################
+
+print()
+if GetInput_YesNo('Do you want to edit the new firewall before installing it? '):
+  IPTABLES = EditData(IPTABLES)
+
+print()
+if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables ? '):
+  WriteFile('/etc/sysconfig/iptables', IPTABLES)
+  print(' ... done!')
+
+print()
+if GetInput_YesNo('Enable and restart firewall service?? '):
+  check_call(('/sbin/chkconfig', 'iptables', 'on'))
+  check_call(('/sbin/service', 'iptables', 'restart'))
+  print(' ... done!')
+
+
+print("\n\n\nComplete!\n\n\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
