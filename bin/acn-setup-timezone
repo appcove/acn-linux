@@ -1,0 +1,40 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  print("The Time is: ", end='')
+  sys.stdout.flush()
+  check_call(('/bin/date'))
+  print()
+
+  if GetInput_YesNo("Set the timezone (yes)? ", Default="yes"):
+    while True:
+      tz = GetInput_Regex("Enter the timezone (America/New_York): ", Regex="^[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+$", Default="America/New_York")
+      
+      if call(('/bin/cp', join('/usr/share/zoneinfo', tz), '/etc/localtime')) > 0:
+        continue
+      
+      break
+    pass#while
+
+    print()
+    print("NOW, the Time is: ", end='')
+    sys.stdout.flush()
+    check_call(('/bin/date'))
+    print()
+  pass#if 
+    
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
