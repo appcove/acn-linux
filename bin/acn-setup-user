@@ -44,7 +44,14 @@ try:
     call(('/usr/sbin/visudo'))
   
     
-
 except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
   print(e)
-
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

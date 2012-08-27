@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  print("Taking a look in /etc/ssh/sshd_config for the password authentication settings:")
+  print('---')
+  if call(('/bin/grep', '-P', r'^\s*PasswordAuthentication', '/etc/ssh/sshd_config')) > 0:
+    raise Exception("PasswordAuthentication setting missing from /etc/ssh/sshd_config !!!")
+  print('---')
+    
+  #----------------------------------------------------------------------------  
+  print()
+  print('*** Before you disable password authentication ***')
+  print('***   make sure you can login with KEYS ONLY.  ***')
+  print()
+
+  if GetInput_YesNo('Disable ssh PasswordAuthentication (no)? ', Default="no"):
+    print("Disabling password logins...")
+    check_call(("sed", "--in-place", "-r", "{s/^\s*PasswordAuthentication\s.*$/PasswordAuthentication no/}", "/etc/ssh/sshd_config"))
+    print()
+    print('/etc/ssh/sshd_config updated to:') 
+    print('---')
+    call(('/bin/grep', '-P', r'^\s*PasswordAuthentication', '/etc/ssh/sshd_config'))
+    print('---')
+    print()
+
+
+
+  if GetInput_YesNo('Restart sshd service (yes)? ', Default="yes"):
+    check_call(("/sbin/service", "sshd", "restart"))
+  
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

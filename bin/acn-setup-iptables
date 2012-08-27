@@ -92,33 +92,41 @@ try:
   print('======= samba =========')
   AddRules('samba', [137,138,139,445], ('tcp', 'udp'))
 
+
+  IPTABLES = TEMPLATE.replace('#CUSTOM#\n', str.join('\n', RULES))
+
+  ###############################################################################
+
+  print()
+  if GetInput_YesNo('Do you want to edit the new firewall before installing it? '):
+    IPTABLES = EditData(IPTABLES)
+
+  print()
+  if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables ? '):
+    WriteFile('/etc/sysconfig/iptables', IPTABLES)
+    print(' ... done!')
+
+  print()
+  if GetInput_YesNo('Enable and restart firewall service?? '):
+    check_call(('/sbin/chkconfig', 'iptables', 'on'))
+    check_call(('/sbin/service', 'iptables', 'restart'))
+    print(' ... done!')
+
+
+  print("\n\n\nComplete!\n\n\n")
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
 except KeyboardInterrupt:
-  Die('\n\n\n*** User Abort ***\n\n')
-
-
-IPTABLES = TEMPLATE.replace('#CUSTOM#\n', str.join('\n', RULES))
-
-###############################################################################
-
-print()
-if GetInput_YesNo('Do you want to edit the new firewall before installing it? '):
-  IPTABLES = EditData(IPTABLES)
-
-print()
-if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables ? '):
-  WriteFile('/etc/sysconfig/iptables', IPTABLES)
-  print(' ... done!')
-
-print()
-if GetInput_YesNo('Enable and restart firewall service?? '):
-  check_call(('/sbin/chkconfig', 'iptables', 'on'))
-  check_call(('/sbin/service', 'iptables', 'restart'))
-  print(' ... done!')
-
-
-print("\n\n\nComplete!\n\n\n")
-
-
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
 
 
 
