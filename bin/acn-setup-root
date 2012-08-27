@@ -1,0 +1,38 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+user = 'root'
+
+try:
+
+  # Set password
+  if GetInput_YesNo("Set password for '{0}' (yes)? ".format(user), Default='yes'):
+    check_call(('/usr/bin/passwd', user))
+  
+  # Configure keys?
+  sshdir = join(pwd.getpwnam(user).pw_dir, '.ssh')
+  
+  
+  if GetInput_YesNo("Configure keys for '{0}' (no)? ".format(user), Default='no'):
+    if not exists(sshdir):
+      os.mkdir(sshdir)
+    
+          
+    print()
+    print("-- PASTE PUBLIC KEY(S) NOW FOLLOWED BY CTRL+D --")
+    os.system("/bin/cat > '%s'" % join(sshdir, 'authorized_keys'))
+    print("-- PASTE COMPLETE --")
+    print()
+    print("setting permissions...")
+    call(('/bin/chmod', '700', sshdir))
+    call(('/bin/chown', user+':'+user, sshdir))
+    call(('/bin/chmod', '600', join(sshdir, 'authorized_keys')))
+    call(('/bin/chown', user+':'+user, join(sshdir, 'authorized_keys')))
+
+    
+
+except Exception as e:
+  print(e)
+
