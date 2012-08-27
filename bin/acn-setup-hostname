@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  print("hostname is: ", end='')
+  sys.stdout.flush()
+  call(('/bin/hostname'))
+  print()
+  
+  if not GetInput_YesNo("Do you want to set the hostname (yes)? ", Default='yes'):
+    sys.exit(0)
+  
+  hostname = GetInput_Regex("Enter the hostname: ", Regex='^[a-zA-Z0-9-.]+$')
+  check_call(('/bin/hostname', hostname))
+  
+  check_call(('/bin/sed', '--in-place', 's/^HOSTNAME=.*/HOSTNAME=%s/' % hostname, '/etc/sysconfig/network'))
+  print()  
+  print("New contents of /etc/syconfig/network:")
+  print("---")
+  call(("cat", "/etc/sysconfig/network"))
+  print("---")
+  print()
+  
+
+except Exception as e:
+  print(e)
+
