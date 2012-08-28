@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+user = 'root'
+
+try:
+  print()
+  os.chdir('/etc') #Important for git commands
+
+  if exists('/etc/.git'):
+    print('/etc is already tracked by git...')
+    print()
+  elif GetInput_YesNo('Do you want to place /etc into a git repository (yes)? ', Default='yes'):
+    print()
+    print('Creating git repo for /etc...')
+    check_call(('git', 'init'))
+    os.chmod('/etc/.git', 0o700)
+    CopySystemFile('etc/.gitignore')
+    CopySystemFile('etc/.gitcommitall')
+    os.chmod('/etc/.gitcommitall', 0o744)
+    check_call(('/etc/.gitcommitall'))
+    print(' ... done')
+    print()
+  else:
+    sys.exit(0)
+
+  print()
+  check_call(('git', 'log', '-3'))
+  print()
+  
+  # Get the current crontab, or an empty one if our `crontab -l` 
+  #   returns a "no crontab for" message on stderr
+  try:  
+    crontab = check_output(('crontab', '-l'), stderr=STDOUT)
+  except CalledProcessError as e:
+    if b'no crontab for' in e.output:
+      crontab = b''
+    else:
+      raise
+
+  # If we already have /etc/.gitcommitall in the crontabl, then skip this
+  if b'/etc/.gitcommitall' in crontab:
+    print('/etc/.gitcommitall already appears to exist in the crontab.')
+    print('Manually edit the crontab to fix if needed.  The current crontab is:')
+    print('---')
+    print(crontab.decode('utf-8'))
+    print()
+    print('---')
+    print()
+  else:
+    while True:
+      if not GetInput_YesNo('Do you want to setup auto-commit for /etc (yes)? ', Default='yes'):
+        break
+      crontime = GetInput('Please specify a valid crontab run time (* 3 * * *): ', Default='* 3 * * *').encode()
+      newcrontab = crontab + b'\n' + crontime + b'   /etc/.gitcommitall\n\n'
+      print('Installing new crontab...')
+      p = Popen(('crontab'), stdin=PIPE)
+      p.communicate(newcrontab)
+      if p.returncode > 0:
+        print()
+        print('ERROR INSTALLING CRONTAB (see above)')
+        print()
+        continue
+      print('   ... done')
+      print()
+      break
+    pass#while
+  pass#else
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
+

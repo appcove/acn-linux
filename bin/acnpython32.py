@@ -5,10 +5,11 @@
 import sys
 import re
 import os
+import shutil
 import pwd
 from os.path import abspath, dirname, join, exists
 from optparse import OptionParser
-from subprocess import call, check_call, check_output, Popen, PIPE, STDOUT
+from subprocess import call, check_call, check_output, Popen, PIPE, STDOUT, CalledProcessError
 import tempfile
 
 ###############################################################################
@@ -19,14 +20,15 @@ import tempfile
 #==============================================================================
 # Add THIS acn-linux's python31 directory to the near-beginning of sys.path
 
-Path = join(dirname(abspath(sys.path[0])), 'python32')
+Path = dirname(abspath(sys.path[0]))
+PythonPath = join(Path, 'python32')
 
 try:
-  sys.path.remove(Path)
+  sys.path.remove(PythonPath)
 except ValueError:
   pass
 
-sys.path.insert(1, Path)
+sys.path.insert(1, PythonPath)
 
 
 
@@ -143,6 +145,15 @@ def WriteFile(FileName, data):
   
 ###############################################################################
 
+def CopySystemFile(RelativePath):
+  sp = join(Path, 'os', RelativePath)
+  dp = join('/', RelativePath)
+
+  if not exists(sp):
+    raise Exception("Specified path does not exist: {0}".format(sp))
+
+  shutil.copyfile(sp, dp)
 
 
+###############################################################################
 
