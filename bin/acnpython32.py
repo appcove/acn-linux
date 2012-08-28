@@ -72,10 +72,10 @@ def GetInput_Regex(Prompt, *, Regex, Trim=True, Default=''):
       text = Default
     
     # validation
-    if re.match(Regexp, text):
+    if re.match(Regex, text):
       return text
     else:
-      print("Invalid Input. Must match /{0}/.".format(Regexp))
+      print("Invalid Input. Must match /{0}/.".format(Regex))
 
 
 ###############################################################################
