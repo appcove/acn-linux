@@ -11,14 +11,10 @@ AppCove Network extensions for RedHat Enterprise Linux and similar.
 
 ## Getting Started
 
-As root, copy and paste these five lines onto your terminal
+As root, copy and paste this line onto your terminal
 
 ```bash
-cd /root 
-wget https://github.com/appcove/acn-linux/raw/master/meta/acn-linux-bootstrap.sh 
-/bin/bash acn-linux-bootstrap.sh
-source /etc/profile
-rm -f acn-linux-bootstrap.sh
+curl -L 'https://github.com/appcove/acn-linux/raw/master/meta/acn-linux-bootstrap.sh' | /bin/bash && source /etc/profile
 ```
 
 This does several things:
@@ -30,13 +26,17 @@ This does several things:
 5. Append to the system $PATH (/opt/acn-linux/bin)
 
 
-acn-setup-iptables
-==================
+To start the setup process
+==========================
 
-This script will assist you in installing and enabling iptables.  
+As root
 
-Call it by typing (as root) `acn-setup-iptables`.
+```bash
+acn-setup
+```
 
-IP addresses should be entered in `1.2.3.4` or `1.2.3.4/32` format.
+This will guide you through each setup step.  We recommend you run 
+them in order, as some depend on others.  
+
 
 
