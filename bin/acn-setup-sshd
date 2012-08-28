@@ -5,6 +5,10 @@ from acnpython32 import *
 
 try:
   print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
   print("Taking a look in /etc/ssh/sshd_config for the password authentication settings:")
   print('---')
   if call(('/bin/grep', '-P', r'^\s*PasswordAuthentication', '/etc/ssh/sshd_config')) > 0:

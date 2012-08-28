@@ -1,0 +1,79 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Install the official nginx yum repository (DEF)? ', Default='yes'):
+    call(("rpm", "-Uvh", Config.Nginx.RepoRPM))
+    print('   ... done')
+    print()
+
+
+  if GetInput_YesNo('Install nginx (DEF)? ', Default='yes'):
+    call(('yum', 'install', 'nginx'))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Setup nginx to start automatically (DEF)? ', Default='yes'):
+    check_call(('chkconfig', 'nginx', 'on'))
+    print('   ... done')
+    print()
+
+  if not exists('/etc/nginx/ssl'):
+    if GetInput_YesNo('Create /etc/nginx/ssl (DEF)? ', Default='yes'):
+      os.mkdir('/etc/nginx/ssl', 0o700)
+      print('   ... done')
+      print()
+
+  while True:
+    if GetInput_YesNo('Install acn version of nginx.conf (DEF)? ', Default='yes'):
+      try:
+        SERVER_PRIMARY_IP = GetInput_IPv4('Primary IP address for nginx to listen on: ')
+        SERVER_ERROR_LOG = GetInput_FilePath('Error Log Location (DEF): ', Default=Config.Nginx.SERVER_ERROR_LOG)
+        SERVER_DOCUMENT_ROOT = GetInput_FilePath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
+       
+        data = ReadSystemFile('etc/nginx/nginx.conf')
+        data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP + ':80')
+        data = data.replace('{SERVER_ERROR_LOG}', SERVER_ERROR_LOG)
+        data = data.replace('{SERVER_DOCUMENT_ROOT}', SERVER_DOCUMENT_ROOT)
+        WriteSystemFile('etc/nginx/nginx.conf', data)
+        print('   ... done')
+        print()
+      except KeyboardInterrupt:
+        print()
+        print()
+        continue
+    break
+
+
+  if GetInput_YesNo('Empty /etc/nginx/conf.d/default.conf (DEF)? ', Default='yes'):
+    check_call('echo "# Emptied by ACN on $(date)" > /etc/nginx/conf.d/default.conf', shell=True)
+    print('   ... done')
+    print()
+  
+
+  if GetInput_YesNo('Start nginx? (DEF)? ', Default='yes'):
+    check_call(('service', 'nginx', 'restart'))
+    print('   ... done')
+    print()
+
+  
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

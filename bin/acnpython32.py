@@ -15,6 +15,13 @@ import tempfile
 ###############################################################################
 # Setup environment
 
+class Config:
+  class Nginx:
+    RepoRPM = 'http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm'
+    SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
+    SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
+
+
 
 
 #==============================================================================
@@ -48,6 +55,7 @@ def HR():
 
 ###############################################################################
 def GetInput_YesNo(Prompt, *, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
     text = input(Prompt).strip()
 
@@ -64,6 +72,7 @@ def GetInput_YesNo(Prompt, *, Default=''):
 
 ###############################################################################
 def GetInput_Regex(Prompt, *, Regex, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
     text = input(Prompt)
 
@@ -79,9 +88,52 @@ def GetInput_Regex(Prompt, *, Regex, Trim=True, Default=''):
     else:
       print("Invalid Input. Must match /{0}/.".format(Regex))
 
+###############################################################################
+def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExist=True, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
+  while True:
+    text = input(Prompt)
+
+    if Trim:
+      text = text.strip()
+
+    if text == '':
+      text = Default
+    
+    # validation
+    if not re.match(Regex, text):
+      print("Invalid Input. Must match /{0}/.".format(Regex))
+      continue
+
+    if DirectoryMustExist:
+      if not exists(dirname(text)):
+        print("Invalid Input.  Directory '{0}' must exist.".format(dirname(text)))
+        continue
+
+    return text
+
+###############################################################################
+def GetInput_IPv4(Prompt, *, Regex='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
+  while True:
+    text = input(Prompt)
+
+    if Trim:
+      text = text.strip()
+
+    if text == '':
+      text = Default
+    
+    # validation
+    if not re.match(Regex, text):
+      print("Invalid Input. Must match /{0}/.".format(Regex))
+      continue
+
+    return text
 
 ###############################################################################
 def GetInput(Prompt, *, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
     text = input(Prompt)
 
@@ -94,8 +146,15 @@ def GetInput(Prompt, *, Trim=True, Default=''):
     return text
 
 ###############################################################################
-def GetInput_Choices(Prompt, *, Choices, Trim=True, Default=''):
+def GetInput_Choices(Prompt, *, Choices, PrintChoices=True, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
+    if PrintChoices:
+      print('Valid Choices:')
+      for choice in Choices:
+        print('* {0}'.format(choice))
+      print()
+
     text = input(Prompt)
 
     if Trim:
@@ -157,3 +216,20 @@ def CopySystemFile(RelativePath):
 
 ###############################################################################
 
+def ReadSystemFile(RelativePath):
+  sp = join(Path, 'os', RelativePath)
+
+  if not exists(sp):
+    raise Exception("Specified path does not exist: {0}".format(sp))
+
+  return open(sp, 'r', encoding='utf-8').read()
+
+###############################################################################
+
+def WriteSystemFile(RelativePath, Data):
+  dp = join('/', RelativePath)
+  open(dp, 'w', encoding='utf-8').write(Data)
+
+
+
+###############################################################################

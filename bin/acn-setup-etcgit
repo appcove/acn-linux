@@ -12,7 +12,7 @@ try:
   if exists('/etc/.git'):
     print('/etc is already tracked by git...')
     print()
-  elif GetInput_YesNo('Do you want to place /etc into a git repository (yes)? ', Default='yes'):
+  elif GetInput_YesNo('Do you want to place /etc into a git repository (DEF)? ', Default='yes'):
     print()
     print('Creating git repo for /etc...')
     check_call(('git', 'init'))
@@ -51,9 +51,9 @@ try:
     print()
   else:
     while True:
-      if not GetInput_YesNo('Do you want to setup auto-commit for /etc (yes)? ', Default='yes'):
+      if not GetInput_YesNo('Do you want to setup auto-commit for /etc (DEF)? ', Default='yes'):
         break
-      crontime = GetInput('Please specify a valid crontab run time (* 3 * * *): ', Default='* 3 * * *').encode()
+      crontime = GetInput('Please specify a valid crontab run time (DEF): ', Default='* 3 * * *').encode()
       newcrontab = crontab + b'\n' + crontime + b'   /etc/.gitcommitall\n\n'
       print('Installing new crontab...')
       p = Popen(('crontab'), stdin=PIPE)

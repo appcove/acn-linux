@@ -5,6 +5,10 @@ from acnpython32 import *
 
 try:
   print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
   print("hostname is: ", end='')
   sys.stdout.flush()
   call(('/bin/hostname'))

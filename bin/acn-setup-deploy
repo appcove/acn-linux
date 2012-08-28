@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  if exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  try:
+    if not exists('/home/deploy'):
+      print('/home/deploy needs created ... launching `acn-setup-user deploy`')
+      check_call((join(Path, 'bin', 'acn-setup-user'), 'deploy'))
+      print()
+  except KeyboardInterrupt:
+    print()
+    print()
+    pass
+  
+
+  if not exists('/home/deploy'):
+    sys.exit(2)
+
+  
+  if GetInput_YesNo('Update permissions on /home/deploy to rwx,rx,rx (DEF)? ', Default='yes'):
+    os.chmod('/home/deploy', 0o755)
+    print('   ... done')
+    print()
+
+  
+  path = '/home/deploy/ServerDocumentRoot'
+  if not exists(path):
+    if GetInput_YesNo('Create {0} (DEF)? '.format(path), Default='yes'):
+      os.mkdir(path)
+      check_call('echo "You have reached $(hostname)" > ' + join(path, 'index.html'), shell=True)
+      check_call(('chown', '-R', 'deploy:deploy', path))
+      print('   ... done')
+      print()
+
+  path = '/home/deploy/Log'
+  if not exists(path):
+    if GetInput_YesNo('Create {0} (DEF)? '.format(path), Default='yes'):
+      os.mkdir(path)
+      os.mkdir(join(path, 'nginx'))
+      os.mkdir(join(path, 'apache'))
+      os.mkdir(join(path, 'cron'))
+      check_call(('chown', '-R', 'deploy:deploy', path))
+      print('   ... done')
+      print()
+  
+  path = '/home/deploy/DevLevel.0'
+  if not exists(path):
+    if GetInput_YesNo('Create {0} (DEF)? '.format(path), Default='yes'):
+      os.mkdir(path)
+      check_call(('chown', '-R', 'deploy:deploy', path))
+      print('   ... done')
+      print()
+  
+  path = '/home/deploy/DevLevel.1'
+  if not exists(path):
+    if GetInput_YesNo('Create {0} (DEF)? '.format(path), Default='yes'):
+      os.mkdir(path)
+      check_call(('chown', '-R', 'deploy:deploy', path))
+      print('   ... done')
+      print()
+  
+
+#except Exception as e:
+#  print()
+#  print()
+#  print('*** Fatal Error ***')
+#  print(e)
+#  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

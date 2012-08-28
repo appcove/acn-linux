@@ -76,6 +76,10 @@ print("You may press ctrl+c to abort at any time")
 print()
 
 try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
 
   print('======= ssh =========')
   AddRules('ssh', [22])

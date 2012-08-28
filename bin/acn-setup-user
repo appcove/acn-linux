@@ -3,27 +3,37 @@
 
 from acnpython32 import *
 
-user = GetInput_Regex("Enter the username to add/update (skip): ", Regex='^[a-zA-Z0-9_-]+$')
-if user == None:
-  sys.exit(0)
-
 try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+
+  # Attempt to read the username from argv[1]
+  try:
+    user = sys.argv[1]
+  except IndexError:
+    user = ''
+  
+  user = GetInput_Regex("Enter the username to add/update (DEF): ", Regex='^[a-zA-Z0-9_-]+$', Default=user)
+  
   # Does user NOT exist?
   print("Checking if user exists...")
   if call(('id', user)):
-    if GetInput_YesNo("User {0} does not exist.  Add the user? ".format(user)) == False:
-      sys.exit(0)
+    if not GetInput_YesNo("User '{0}' does not exist.  Add the user (DEF)? ".format(user), Default='yes'):
+      sys.exit(1)
     check_call(('/usr/sbin/useradd', user))
 
 
   # Set password
-  while GetInput_YesNo("Set password for '{0}' (yes)? ".format(user), Default='yes'):
+  while GetInput_YesNo("Set password for '{0}' (DEF)? ".format(user), Default='yes'):
     if call(('/usr/bin/passwd', user)) == 0:
       break
   
   # Configure keys?
   sshdir = join(pwd.getpwnam(user).pw_dir, '.ssh')
-  if GetInput_YesNo("Configure keys for '{0}' (yes)? ".format(user), Default='yes'):
+  if GetInput_YesNo("Configure keys for '{0}' (DEF)? ".format(user), Default='yes'):
     if not exists(sshdir):
       os.mkdir(sshdir)
     
@@ -40,7 +50,7 @@ try:
     call(('/bin/chown', user+':'+user, join(sshdir, 'authorized_keys')))
 
   # run visudo
-  if GetInput_YesNo("Run visudo (no)? ", Default='no'):
+  if GetInput_YesNo("Run visudo (DEF)? ", Default='no'):
     call(('/usr/sbin/visudo'))
   
     
@@ -50,8 +60,13 @@ except Exception as e:
   print('*** Fatal Error ***')
   print(e)
   print()
+  sys.exit(2)
 except KeyboardInterrupt:
   print()  
   print()
   print('*** User Abort ***')
   print()
+  sys.exit(1)
+
+
+sys.exit(0)
