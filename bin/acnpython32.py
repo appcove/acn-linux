@@ -167,7 +167,8 @@ def GetInput_Choices(Prompt, *, Choices, PrintChoices=True, Trim=True, Default='
     if text in Choices:
       return text
     else:
-      print("Invalid Input. Must match /{0}/.".format(Regexp))
+      print("Invalid Input. Must be one of [{0}].".format(str.join(', ', Choices)))
+      print()
 
 
 ###############################################################################

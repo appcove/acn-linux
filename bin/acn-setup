@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+from collections import OrderedDict
+
+commands = OrderedDict()
+commands['1'] = ('acn-command', 'acn-setup-etcgit')
+commands['2'] = ('acn-command', 'acn-setup-root')
+commands['3'] = ('acn-command', 'acn-setup-timezone')
+commands['4'] = ('acn-command', 'acn-setup-hostname')
+commands['5'] = ('acn-command', 'acn-setup-iptables')
+commands['6'] = ('acn-command', 'acn-setup-user')
+commands['7'] = ('acn-command', 'acn-setup-sshd')
+commands['8'] = ('acn-command', 'acn-setup-vim')
+commands['9'] = ('acn-command', 'acn-setup-git')
+commands['10'] = ('acn-command', 'acn-setup-deploy')
+commands['11'] = ('acn-command', 'acn-setup-nginx')
+commands['exit'] = ('quit', 'quit the program')
+
+
+
+try:
+  while True:
+    print()
+    print('Available Commands: ')
+    i = 0
+    for command, data in commands.items():
+      print("  {0:10s}  {1}".format(command, data[1]))
+    
+    print()
+    command = GetInput_Choices('Enter Command: ', Choices=commands.keys(), PrintChoices=False)
+  
+    command_data = commands[command]
+
+    if command_data[0] == 'acn-command':
+      try:
+        cmd = join(Path, 'bin', command_data[1])
+        print()
+        print("CALLING {0}".format(cmd))
+        print()
+        call((cmd))
+      except KeyboardInterrupt:
+        pass
+    
+    elif command_data[0] == 'quit':
+      sys.exit(0)
+    
+    else:
+      raise Exception("Unknown command type: '{0}'".format(command_type))
+
+  print()
+
+
+#except Exception as e:
+#  print()
+#  print()
+#  print('*** Fatal Error ***')
+#  print(e)
+#  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
+
