@@ -20,6 +20,11 @@ class Config:
     RepoRPM = 'http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm'
     SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
+  class Postgres:
+    RepoRPM = 'http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-redhat91-9.1-5.noarch.rpm'
+    ServerPackage = 'postgresql91-server'
+    ClientPackage = 'postgresql91'
+    ServiceName = 'postgresql-9.1'
 
 
 
@@ -61,6 +66,10 @@ def GetInput_YesNo(Prompt, *, Default=''):
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     if text in ('y', 'yes', 'Y', 'YES', 'Yes'):
       return True
@@ -68,6 +77,39 @@ def GetInput_YesNo(Prompt, *, Default=''):
       return False
     else:
       print("Invalid Input. Must be either 'yes' or 'no'.")
+
+
+###############################################################################
+def GetInput_Int(Prompt, *, MinValue=None, MaxValue=None, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
+  while True:
+    text = input(Prompt)
+
+    if Trim:
+      text = text.strip()
+
+    if text == '':
+      text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
+    
+    try:
+      value = int(text)
+    except ValueError:
+      print("Invalid Input. Must be an integer.")
+      continue
+
+    if MinValue != None and value < MinValue:
+      print("Invalid Input. Must be at least {0}.".format(MinValue))
+      continue
+
+    if MaxValue != None and value > MaxValue:
+      print("Invalid Input. Must be no more than {0}.".format(MaxValue))
+      continue
+
+    return value
 
 
 ###############################################################################
@@ -81,6 +123,10 @@ def GetInput_Regex(Prompt, *, Regex, Trim=True, Default=''):
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     # validation
     if re.match(Regex, text):
@@ -99,6 +145,10 @@ def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExi
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     # validation
     if not re.match(Regex, text):
@@ -113,8 +163,14 @@ def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExi
     return text
 
 ###############################################################################
-def GetInput_IPv4(Prompt, *, Regex='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', Trim=True, Default=''):
+def GetInput_IPv4(Prompt, *, WithRange=False, Trim=True, Default=''):
+  if WithRange:
+    Regex='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{1,2}$'
+  else:
+    Regex='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
+
   Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
+
   while True:
     text = input(Prompt)
 
@@ -123,6 +179,10 @@ def GetInput_IPv4(Prompt, *, Regex='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     # validation
     if not re.match(Regex, text):
@@ -142,6 +202,10 @@ def GetInput(Prompt, *, Trim=True, Default=''):
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     return text
 
@@ -162,6 +226,10 @@ def GetInput_Choices(Prompt, *, Choices, PrintChoices=True, Trim=True, Default='
 
     if text == '':
       text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
     
     # validation
     if text in Choices:

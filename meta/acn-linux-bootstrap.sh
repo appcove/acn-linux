@@ -8,7 +8,7 @@ echo 'Install IUS'
 rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-10.ius.el6.noarch.rpm
 
 echo 'Install [git, vim-enhanced, python32]'
-yum install git vim-enhanced python32 --enablerepo=ius-testing
+yum install -y git vim-enhanced python32 --enablerepo=ius-testing
 
 echo 'cd to /opt'
 cd /opt
@@ -20,15 +20,19 @@ fi
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
 
-F="/etc/profile.d/acn-linux-manual.sh"
+F="/etc/profile.d/acn-linux.sh"
 echo "Install $F"
 echo 'pathmunge /opt/acn-linux/bin' > $F
 
-F="/usr/lib64/python2.6/site-packages/acn-linux-manual.pth"
+F="/etc/profile.d/acn-linux-vim.sh"
+echo "Install $F"
+echo 'alias vi=vim' > $F
+
+F="/usr/lib64/python2.6/site-packages/acn-linux.pth"
 echo "Install $F"
 echo '/opt/acn-linux/python2.6' > $F
 
-F="/usr/lib64/python3.2/site-packages/acn-linux-manual.pth"
+F="/usr/lib64/python3.2/site-packages/acn-linux.pth"
 echo "Install $F"
 echo '/opt/acn-linux/python3.2' > $F
 
