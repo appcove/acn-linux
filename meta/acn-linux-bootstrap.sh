@@ -37,6 +37,10 @@ echo "Install $F"
 echo '/opt/acn-linux/python3.2' > $F
 
 
-echo "Done!"
+echo "--- Done! ---"
+echo "The next step would be to run: "
+echo "  acn-setup"
+echo 
+
 
 

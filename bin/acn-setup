@@ -17,6 +17,7 @@ commands['8'] = ('acn-command', 'acn-setup-vim')
 commands['9'] = ('acn-command', 'acn-setup-git')
 commands['10'] = ('acn-command', 'acn-setup-deploy')
 commands['11'] = ('acn-command', 'acn-setup-nginx')
+commands['12'] = ('acn-command', 'acn-setup-postgres')
 commands['exit'] = ('quit', 'quit the program')
 
 

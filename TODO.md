@@ -1,5 +1,21 @@
 acn-setup-tree
+
 acn-setup-mc
-acn-setup-vim > add alias vi=vim to profile.d
+
+Some defaults missing from iptables setup.
+
+acn-setup-mysql
+
+acn-setup-apache
+
+acn-setup-wsgi
+
+acn-setup-backup
+
+acn-setup-backup-mysql
+
+acn-setup-backup-postgres
+
+
 
 
