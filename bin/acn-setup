@@ -5,20 +5,35 @@ from acnpython32 import *
 
 from collections import OrderedDict
 
-commands = OrderedDict()
-commands['1'] = ('acn-command', 'acn-setup-etcgit')
-commands['2'] = ('acn-command', 'acn-setup-root')
-commands['3'] = ('acn-command', 'acn-setup-timezone')
-commands['4'] = ('acn-command', 'acn-setup-hostname')
-commands['5'] = ('acn-command', 'acn-setup-iptables')
-commands['6'] = ('acn-command', 'acn-setup-user')
-commands['7'] = ('acn-command', 'acn-setup-sshd')
-commands['8'] = ('acn-command', 'acn-setup-vim')
-commands['9'] = ('acn-command', 'acn-setup-git')
-commands['10'] = ('acn-command', 'acn-setup-deploy')
-commands['11'] = ('acn-command', 'acn-setup-nginx')
-commands['12'] = ('acn-command', 'acn-setup-postgres')
-commands['exit'] = ('quit', 'quit the program')
+CDEF = [
+  ('1',     'acn-command', 'acn-setup-etcgit',       'Setup /etc with git'       ),
+  ('2',     'acn-command', 'acn-setup-root',         'Configure root user'       ),
+  ('3',     'acn-command', 'acn-setup-timezone',     'Set timzone'               ),
+  ('4',     'acn-command', 'acn-setup-hostname',     'Set hostname'              ),
+  ('5',     'acn-command', 'acn-setup-iptables',     'Build a firewall'          ),
+  ('6',     'acn-command', 'acn-setup-user',         'Add/update a user'         ),
+  ('7',     'acn-command', 'acn-setup-sshd',         'Lock down sshd'            ),
+  ('8',     'acn-command', 'acn-setup-vim',          'Install custom vimrc'      ),
+  ('9',     'acn-command', 'acn-setup-git',          'Install custom gitconfig'  ),
+  ('10',    'acn-command', 'acn-setup-deploy',       'Build deploy user'         ),
+  ('11',    'acn-command', 'acn-setup-nginx',        'Install/setup nginx'       ),
+  ('12',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql'  ),
+  ('exit',  'exit',        'quit the program',       'acn-setup-etcgit'          ),
+  ]
+
+ADEF = {
+  'quit'  : 'exit',
+  }
+
+
+
+###############################################################################
+CommandMap = OrderedDict()
+for r in CDEF:
+  CommandMap[r[0]] = r[1:]
+
+AliasMap = OrderedDict(((r[0],r[0]) for r in CDEF))
+AliasMap.update(ADEF)
 
 
 
@@ -27,17 +42,19 @@ try:
     print()
     print('Available Commands: ')
     i = 0
-    for command, data in commands.items():
-      print("  {0:10s}  {1}".format(command, data[1]))
+    for command, data in CommandMap.items():
+      print("  {0:6s} {1}".format(command, data[2]))
     
     print()
-    command = GetInput_Choices('Enter Command: ', Choices=commands.keys(), PrintChoices=False)
+    command = CommandMap[
+      AliasMap[
+        GetInput_Choices('Enter Command: ', Choices=AliasMap.keys(), PrintChoices=False)
+        ]
+      ]
   
-    command_data = commands[command]
-
-    if command_data[0] == 'acn-command':
+    if command[0] == 'acn-command':
       try:
-        cmd = join(Path, 'bin', command_data[1])
+        cmd = join(Path, 'bin', command[1])
         print()
         print("CALLING {0}".format(cmd))
         print()
@@ -45,11 +62,12 @@ try:
       except KeyboardInterrupt:
         pass
     
-    elif command_data[0] == 'quit':
+    elif command[0] == 'exit':
+      print()
       sys.exit(0)
     
     else:
-      raise Exception("Unknown command type: '{0}'".format(command_type))
+      print("Unknown command type: '{0}'".format(command_type))
 
   print()
 
