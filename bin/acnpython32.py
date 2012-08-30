@@ -25,6 +25,10 @@ class Config:
     ServerPackage = 'postgresql91-server'
     ClientPackage = 'postgresql91'
     ServiceName = 'postgresql-9.1'
+  class MySQL:
+    ServerPackage = 'mysql-server'
+    ClientPackage = 'mysql'
+    ServiceName = 'mysqld'
 
 
 

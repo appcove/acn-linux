@@ -6,19 +6,20 @@ from acnpython32 import *
 from collections import OrderedDict
 
 CDEF = [
-  ('1',     'acn-command', 'acn-setup-etcgit',       'Setup /etc with git'       ),
-  ('2',     'acn-command', 'acn-setup-root',         'Configure root user'       ),
-  ('3',     'acn-command', 'acn-setup-timezone',     'Set timzone'               ),
-  ('4',     'acn-command', 'acn-setup-hostname',     'Set hostname'              ),
-  ('5',     'acn-command', 'acn-setup-iptables',     'Build a firewall'          ),
-  ('6',     'acn-command', 'acn-setup-user',         'Add/update a user'         ),
-  ('7',     'acn-command', 'acn-setup-sshd',         'Lock down sshd'            ),
-  ('8',     'acn-command', 'acn-setup-vim',          'Install custom vimrc'      ),
-  ('9',     'acn-command', 'acn-setup-git',          'Install custom gitconfig'  ),
-  ('10',    'acn-command', 'acn-setup-deploy',       'Build deploy user'         ),
-  ('11',    'acn-command', 'acn-setup-nginx',        'Install/setup nginx'       ),
-  ('12',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql'  ),
-  ('exit',  'exit',        'quit the program',       'acn-setup-etcgit'          ),
+  ('1',     'acn-command', 'acn-setup-etcgit',       'Setup /etc with git'          ),
+  ('2',     'acn-command', 'acn-setup-root',         'Configure root user'          ),
+  ('3',     'acn-command', 'acn-setup-timezone',     'Set timzone'                  ),
+  ('4',     'acn-command', 'acn-setup-hostname',     'Set hostname'                 ),
+  ('5',     'acn-command', 'acn-setup-iptables',     'Build a firewall'             ),
+  ('6',     'acn-command', 'acn-setup-user',         'Add/update a user'            ),
+  ('7',     'acn-command', 'acn-setup-sshd',         'Lock down sshd'               ),
+  ('8',     'acn-command', 'acn-setup-vim',          'Install custom vimrc'         ),
+  ('9',     'acn-command', 'acn-setup-git',          'Install custom gitconfig'     ),
+  ('10',    'acn-command', 'acn-setup-deploy',       'Build deploy user'            ),
+  ('11',    'acn-command', 'acn-setup-nginx',        'Install/setup nginx'          ),
+  ('12',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql91'   ),
+  ('13',    'acn-command', 'acn-setup-mysql',        'Install/setup mysql55'        ),
+  ('exit',  'exit',        '',                       'Exit the program'             ),
   ]
 
 ADEF = {
