@@ -33,6 +33,19 @@ class Config:
     CustomLog = '/home/deploy/Log/apache/access.log'
     ErrorLog = '/home/deploy/Log/apache/error.log'
     DocumentRoot = '/home/deploy/ServerDocumentRoot'
+  class PHP:
+    PackageList = (
+      'php54',
+      'php54-bcmath',
+      'php54-cli',
+      'php54-common',
+      'php54-gd',
+      'php54-imap',
+      'php54-mysql',
+      'php54-pdo',
+      'php54-xml',
+      )
+
 
 
 

@@ -17,9 +17,10 @@ CDEF = [
   ('19',    'acn-command', 'acn-setup-git',          'Install custom gitconfig'     ),
   ('20',    'acn-command', 'acn-setup-deploy',       'Build deploy user'            ),
   ('21',    'acn-command', 'acn-setup-nginx',        'Install/setup nginx'          ),
-  ('22',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql91'   ),
-  ('23',    'acn-command', 'acn-setup-mysql',        'Install/setup mysql55'        ),
+  ('22',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql 9.1' ),
+  ('23',    'acn-command', 'acn-setup-mysql',        'Install/setup mysql 5.5'      ),
   ('24',    'acn-command', 'acn-setup-apache',       'Install/setup apache'         ),
+  ('25',    'acn-command', 'acn-setup-php',          'Install/setup php 5.4'        ),
   ('exit',  'exit',        '',                       'Exit the program'             ),
   ]
 
