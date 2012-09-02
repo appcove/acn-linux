@@ -7,7 +7,7 @@ import re
 import os
 import shutil
 import pwd
-from os.path import abspath, dirname, join, exists
+from os.path import abspath, dirname, join, exists, isdir
 from optparse import OptionParser
 from subprocess import call, check_call, check_output, Popen, PIPE, STDOUT, CalledProcessError
 import tempfile
@@ -29,6 +29,10 @@ class Config:
     ServerPackage = 'mysql-server'
     ClientPackage = 'mysql'
     ServiceName = 'mysqld'
+  class Apache:
+    CustomLog = '/home/deploy/Log/apache/access.log'
+    ErrorLog = '/home/deploy/Log/apache/error.log'
+    DocumentRoot = '/home/deploy/ServerDocumentRoot'
 
 
 
@@ -139,7 +143,7 @@ def GetInput_Regex(Prompt, *, Regex, Trim=True, Default=''):
       print("Invalid Input. Must match /{0}/.".format(Regex))
 
 ###############################################################################
-def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExist=True, Trim=True, Default=''):
+def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', ParentDirectoryMustExist=True, FileMustExist=False, Trim=True, Default=''):
   Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
     text = input(Prompt)
@@ -159,9 +163,46 @@ def GetInput_FilePath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExi
       print("Invalid Input. Must match /{0}/.".format(Regex))
       continue
 
-    if DirectoryMustExist:
+    if ParentDirectoryMustExist:
       if not exists(dirname(text)):
         print("Invalid Input.  Directory '{0}' must exist.".format(dirname(text)))
+        continue
+    
+    if FileMustExist:
+      if not exists(text):
+        print("Invalid Input.  File '{0}' must exist.".format(text))
+        continue
+
+
+    return text
+
+###############################################################################
+def GetInput_DirectoryPath(Prompt, *, Regex='^(/[a-zA-Z0-9_.-]+)+$', DirectoryMustExist=False, StripTrailingSlash=True, Trim=True, Default=''):
+  Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
+  while True:
+    text = input(Prompt)
+
+    if Trim:
+      text = text.strip()
+
+    if StripTrailingSlash:
+      text = text.rstrip('/')
+
+    if text == '':
+      text = Default
+
+    # If Default is None and nothing was entered, then return None
+    if text == None:
+      return None
+    
+    # validation
+    if not re.match(Regex, text):
+      print("Invalid Input. Must match /{0}/.".format(Regex))
+      continue
+    
+    if DirectoryMustExist:
+      if not exists(text) or not isdir(text):
+        print("Invalid Input.  Directory '{0}' must exist and be a directory.".format(text))
         continue
 
     return text
@@ -278,7 +319,7 @@ def WriteFile(FileName, data):
 ###############################################################################
 
 def CopySystemFile(RelativePath):
-  sp = join(Path, 'os', RelativePath)
+  sp = join(Path, 'os-template', RelativePath)
   dp = join('/', RelativePath)
 
   if not exists(sp):
@@ -290,7 +331,7 @@ def CopySystemFile(RelativePath):
 ###############################################################################
 
 def ReadSystemFile(RelativePath):
-  sp = join(Path, 'os', RelativePath)
+  sp = join(Path, 'os-template', RelativePath)
 
   if not exists(sp):
     raise Exception("Specified path does not exist: {0}".format(sp))

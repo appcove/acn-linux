@@ -37,7 +37,7 @@ try:
       try:
         SERVER_PRIMARY_IP = GetInput_IPv4('Primary IP address for nginx to listen on: ')
         SERVER_ERROR_LOG = GetInput_FilePath('Error Log Location (DEF): ', Default=Config.Nginx.SERVER_ERROR_LOG)
-        SERVER_DOCUMENT_ROOT = GetInput_FilePath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
+        SERVER_DOCUMENT_ROOT = GetInput_DirectoryPath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
        
         data = ReadSystemFile('etc/nginx/nginx.conf')
         data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP + ':80')
