@@ -31,6 +31,12 @@ try:
       os.mkdir('/etc/nginx/ssl', 0o700)
       print('   ... done')
       print()
+  
+  if not exists('/etc/nginx/conf.server.d'):
+    if GetInput_YesNo('Create /etc/nginx/conf.server.d (DEF)? ', Default='yes'):
+      os.mkdir('/etc/nginx/conf.server.d', 0o755)
+      print('   ... done')
+      print()
 
   while True:
     if GetInput_YesNo('Install acn version of nginx.conf (DEF)? ', Default='yes'):
