@@ -253,7 +253,7 @@ def GetInput_IPv4(Prompt, *, WithRange=False, Trim=True, Default=''):
     return text
 
 ###############################################################################
-def GetInput(Prompt, *, Trim=True, Default=''):
+def GetInput(Prompt, *, Trim=True, Default='', Required=False):
   Prompt = Prompt.replace('(DEF)', ('('+str(Default)+')' if Default else ''))
   while True:
     text = input(Prompt)
@@ -263,6 +263,10 @@ def GetInput(Prompt, *, Trim=True, Default=''):
 
     if text == '':
       text = Default
+
+    if not text and Required:
+      print("Invalid Input.  Must not be empty.")
+      continue
 
     # If Default is None and nothing was entered, then return None
     if text == None:

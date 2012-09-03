@@ -9,6 +9,30 @@ try:
   print()
   os.chdir('/etc') #Important for git commands
 
+  print("Current git identity:")
+  call(('git', 'config', '--global', 'user.name'))
+  call(('git', 'config', '--global', 'user.email'))
+  print()
+  print()
+  
+  if GetInput_YesNo('Do you want to set/update your git identity (DEF)? ', Default='yes'):
+    user_name = GetInput('user.name: ', Required=True)
+    user_email = GetInput_Regex('user.email: ', Regex='^[^@]+[@][^@]+$')
+    
+    print()
+    print('Updating git...')
+    
+    c = ('git', 'config', '--global', 'user.name', user_name)
+    print(c)
+    call(c)
+    
+    c = ('git', 'config', '--global', 'user.email', user_email)
+    print(c)
+    call(c)
+
+    print('   ... done')
+    print()
+  
   if exists('/etc/.git'):
     print('/etc is already tracked by git...')
     print()
