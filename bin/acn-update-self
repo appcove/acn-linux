@@ -13,14 +13,14 @@ try:
     print()
     print('GIT IS NOT ON master')
     print()
-    call('git status')
-    call('git branch')
+    call(('git', 'status'))
+    call(('git', 'branch'))
     print
     sys.exit()
 
     
   if GetInput_YesNo('Do you want to update "{0}" to the latest? (DEF)? '.format(Path), Default='yes'):
-    check_call('git pull')
+    check_call(('git', 'pull'))
 
 
 except Exception as e:
