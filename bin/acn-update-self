@@ -1,0 +1,37 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+user = 'root'
+
+try:
+  print()
+  os.chdir(Path) #Important for git commands
+
+  if open('.git/HEAD', 'r').read().strip() != 'ref: refs/heads/master':
+    print()
+    print('GIT IS NOT ON master')
+    print()
+    call('git status')
+    call('git branch')
+    print
+    sys.exit()
+
+    
+  if GetInput_YesNo('Do you want to update "{0}" to the latest? (DEF)? '.format(Path), Default='yes'):
+    check_call('git pull')
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
+
