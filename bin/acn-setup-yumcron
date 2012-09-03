@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+
+
+  if GetInput_YesNo('Do you want to install `yum-cron` (yes)? ', Default='yes'):
+    call(('yum', 'install', 'yum-cron'))
+    print()
+
+
+  if GetInput_YesNo('Setup yum-cron to start automatically (DEF)? ', Default='yes'):
+    check_call(('chkconfig', 'yum-cron', 'on'))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Start the yum-cron service (DEF)? ', Default='yes'):
+    check_call(('service', 'yum-cron', 'start'))
+    print('   ... done')
+    print()
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
+

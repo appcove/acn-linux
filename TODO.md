@@ -8,6 +8,5 @@ acn-setup-backup-mysql
 
 acn-setup-backup-postgres
 
-yum-cron
 
 
