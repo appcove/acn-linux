@@ -34,7 +34,7 @@ RULES = []
 def AddRules(service, ports, protocols=('tcp',)):
   while True:
     print()
-    s = GetInput('<enter> to skip.  Source address for '+service+' or "any": ')
+    s = GetInput('Source address for '+service+' or "any" (skip): ')
     
     if s == '':
       print()
@@ -102,16 +102,16 @@ try:
   ###############################################################################
 
   print()
-  if GetInput_YesNo('Do you want to edit the new firewall before installing it? '):
+  if GetInput_YesNo('Do you want to edit the new firewall before installing it (DEF)? ', Default='yes'):
     IPTABLES = EditData(IPTABLES)
 
   print()
-  if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables ? '):
+  if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables (DEF)? ', Default='yes'):
     WriteFile('/etc/sysconfig/iptables', IPTABLES)
     print(' ... done!')
 
   print()
-  if GetInput_YesNo('Enable and restart firewall service?? '):
+  if GetInput_YesNo('Enable and restart firewall service (DEF)? ', Default='yes'):
     check_call(('/sbin/chkconfig', 'iptables', 'on'))
     check_call(('/sbin/service', 'iptables', 'restart'))
     print(' ... done!')
