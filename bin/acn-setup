@@ -22,6 +22,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-sshd',            'Lock down sshd'                    ),
   (N(),    'acn-command', 'acn-setup-vim',             'Install custom vimrc'              ),
   (N(),    'acn-command', 'acn-setup-git',             'Install custom gitconfig'          ),
+  (N(),    'acn-command', 'acn-setup-tree',            'Install `tree`'                    ),
   (N(),    'acn-command', 'acn-setup-deploy',          'Build deploy user'                 ),
   (N(),    'acn-command', 'acn-setup-nginx',           'Install/setup nginx'               ),
   (N(),    'acn-command', 'acn-setup-postgres',        'Install/setup postgresql 9.1'      ),
@@ -57,7 +58,7 @@ try:
     print('Available Commands: ')
     i = 0
     for command, data in CommandMap.items():
-      print("  {0:6s} {1}".format(command, data[2]))
+      print("  {0:.<8}{1}".format(command, data[2]))
     
     print()
     command = CommandMap[
@@ -82,6 +83,12 @@ try:
     
     else:
       print("Unknown command type: '{0}'".format(command_type))
+
+    print()
+    GetInput("Press enter to continue...")
+    print()
+
+  pass#while
 
   print()
 
