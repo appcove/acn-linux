@@ -1,0 +1,93 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Install mod_wsgi for python 3.2 (DEF)? ', Default='yes'):
+    #call(('yum', 'install') + Config.mod_wsgi.PackageList + ('--enablerepo=ius-testing',))
+    call(('rpm', '-i', join(Path, 'rpms', 'python32-mod_wsgi-3.4-0.ius.el6.x86_64.rpm')))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Install mod_rpaf for apache (DEF)? ', Default='yes'):
+    call(('rpm', '-i', join(Path, 'rpms', 'mod_rpaf-0.6-0.acn.el6.x86_64.rpm')))
+    print('   ... done')
+    print()
+
+
+  while True:
+    if GetInput_YesNo('Build/rebuild mod_wsgi / mod_rpaf configuration (DEF)? ', Default='yes'):
+      try:
+       
+        print()
+        print('--- mod_rpaf: what source addresses should mod_rpaf pay attention to ---')
+        print('Typically, this would be the address nginx is running on.')
+        print('Default is 127.0.0.1')
+        print()
+        
+        RPAFproxy_ips = []
+        while True:
+          ip = GetInput_IPv4('Enter IP for RPAFproxy_ips (skip): ', Default=None)
+          if ip != None:
+            RPAFproxy_ips.append(ip)
+          else:
+            break
+        print()
+        RPAFproxy_ips = RPAFproxy_ips or ['127.0.0.1']
+        
+        print('--- WRITING /etc/httpd/conf.d/python32-mod_wsgi.conf ---')
+        data = ReadSystemFile('etc/httpd/conf.d/python32-mod_wsgi.conf')
+        WriteSystemFile('etc/httpd/conf.d/python32-mod_wsgi.conf', data)
+        print('   ... done')
+        print()
+        
+        print('--- WRITING rpaf.conf ---')
+        data = ReadSystemFile('etc/httpd/conf.d/rpaf.conf')
+        data = data.replace('{RPAFproxy_ips}', str.join(' ', RPAFproxy_ips))
+        WriteSystemFile('etc/httpd/conf.d/rpaf.conf', data)
+        print('   ... done')
+        print()
+     
+        if GetInput_YesNo('Run `service httpd configtest` (DEF)? ', Default='yes'):
+          if call(('service', 'httpd', 'configtest')) > 0:
+            print()
+            print('ERRORS were found during configest.  Will give you a chance to rebuild.')
+            print('Please note that /etc/httpd/conf/httpd.conf HAS BEEN INSTALLED.')
+            print()
+            continue
+
+      except KeyboardInterrupt:
+        print()
+        print()
+        continue
+    break
+
+  
+  if GetInput_YesNo('Restart apache? (DEF)? ', Default='yes'):
+    check_call(('service', 'httpd', 'restart'))
+    print('   ... done')
+    print()
+
+ 
+  print()
+  print()
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

@@ -5,23 +5,33 @@ from acnpython32 import *
 
 from collections import OrderedDict
 
+n = 9
+def N():
+  global n
+  n += 1
+  return str(n)
+  
+
 CDEF = [
-  ('11',    'acn-command', 'acn-setup-etcgit',       'Setup /etc with git'          ),
-  ('12',    'acn-command', 'acn-setup-root',         'Configure root user'          ),
-  ('13',    'acn-command', 'acn-setup-timezone',     'Set timzone'                  ),
-  ('14',    'acn-command', 'acn-setup-hostname',     'Set hostname'                 ),
-  ('15',    'acn-command', 'acn-setup-iptables',     'Build a firewall'             ),
-  ('16',    'acn-command', 'acn-setup-user',         'Add/update a user'            ),
-  ('17',    'acn-command', 'acn-setup-sshd',         'Lock down sshd'               ),
-  ('18',    'acn-command', 'acn-setup-vim',          'Install custom vimrc'         ),
-  ('19',    'acn-command', 'acn-setup-git',          'Install custom gitconfig'     ),
-  ('20',    'acn-command', 'acn-setup-deploy',       'Build deploy user'            ),
-  ('21',    'acn-command', 'acn-setup-nginx',        'Install/setup nginx'          ),
-  ('22',    'acn-command', 'acn-setup-postgres',     'Install/setup postgresql 9.1' ),
-  ('23',    'acn-command', 'acn-setup-mysql',        'Install/setup mysql 5.5'      ),
-  ('24',    'acn-command', 'acn-setup-apache',       'Install/setup apache'         ),
-  ('25',    'acn-command', 'acn-setup-php',          'Install/setup php 5.4'        ),
-  ('exit',  'exit',        '',                       'Exit the program'             ),
+  (N(),    'acn-command', 'acn-setup-etcgit',          'Setup /etc with git'               ),
+  (N(),    'acn-command', 'acn-setup-root',            'Configure root user'               ),
+  (N(),    'acn-command', 'acn-setup-timezone',        'Set timzone'                       ),
+  (N(),    'acn-command', 'acn-setup-hostname',        'Set hostname'                      ),
+  (N(),    'acn-command', 'acn-setup-iptables',        'Build a firewall'                  ),
+  (N(),    'acn-command', 'acn-setup-user',            'Add/update a user'                 ),
+  (N(),    'acn-command', 'acn-setup-sshd',            'Lock down sshd'                    ),
+  (N(),    'acn-command', 'acn-setup-vim',             'Install custom vimrc'              ),
+  (N(),    'acn-command', 'acn-setup-git',             'Install custom gitconfig'          ),
+  (N(),    'acn-command', 'acn-setup-deploy',          'Build deploy user'                 ),
+  (N(),    'acn-command', 'acn-setup-nginx',           'Install/setup nginx'               ),
+  (N(),    'acn-command', 'acn-setup-postgres',        'Install/setup postgresql 9.1'      ),
+  (N(),    'acn-command', 'acn-setup-python-postgres', 'Install/setup python-postgresql'   ),
+  (N(),    'acn-command', 'acn-setup-mysql',           'Install/setup mysql 5.5'           ),
+  (N(),    'acn-command', 'acn-setup-apache',          'Install/setup apache'              ),
+  (N(),    'acn-command', 'acn-setup-php',             'Install/setup php 5.4'             ),
+  (N(),    'acn-command', 'acn-setup-modwsgi',         'Install/setup mod_wsgi'            ),
+  (N(),    'acn-command', 'acn-setup-systemupdate',    'Update all packages'               ),
+  ('exit', 'exit',        '',                          'Exit the program'                  ),
   ]
 
 ADEF = {

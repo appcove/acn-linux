@@ -16,6 +16,12 @@ try:
     print('   ... done')
     print()
 
+  if not exists('/etc/httpd/conf.virtualhost.d'):
+    if GetInput_YesNo('Create /etc/httpd/conf.virtualhost.d (DEF)? ', Default='yes'):
+      os.mkdir('/etc/httpd/conf.virtualhost.d', 0o755)
+      print('   ... done')
+      print()
+  
   if GetInput_YesNo('Setup apache to start automatically (DEF)? ', Default='yes'):
     check_call(('chkconfig', 'httpd', 'on'))
     print('   ... done')

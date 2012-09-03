@@ -45,7 +45,10 @@ class Config:
       'php54-pdo',
       'php54-xml',
       )
-
+  class mod_wsgi:
+    PackageList = ('python32-mod_wsgi',)
+  class PythonPostgres:
+    Package = 'python32-postgresql'
 
 
 
