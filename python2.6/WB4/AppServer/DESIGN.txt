@@ -1,0 +1,29 @@
+WB4 App Server
+
+
+
+Design facts:
+
+- One server can serve multiple WB4 Instances.
+
+- Each instance is keyed by (DevLevel, DevName) 
+  This means that you cannot have two instances registered with the same DevLevel and DevName.
+
+- Each project is keyed by (DevLevel, DevName, ProjectIdentifier)
+  This means that you cannot have two of the same projects within the same Instance.
+
+- Workers are BOUND to a (DevLevel, DevName, ProjectIdentifier).  For the entire lifetime of the
+  worker, it will stay bound to the same.  This is to prevent excessive module loading, and 
+  excessive database connections.
+
+- Connections are UNBOUND.  They can be reused for any DevLevel, DevName, and Project.
+
+- Sessions are started on Connections.  Sessions are kept alive for the duration of the "page"
+  or client that is using the connection.  In other words, sessions will be started and ended
+  frequently on the same connection.
+
+- Sessions are BOUND to a (DevLevel, DevName, ProjectIdentifier).  On the Start Session packet,
+  the client must specify which DevLevel, DevName, and Project to connect to.
+
+
+

@@ -1,0 +1,177 @@
+#!/usr/local/bin/python
+
+
+#TODO: look at Parser.destroy() to break cyclic memory references..  Perhaps destroy it before entering the main workers.
+
+import sys
+import os
+from os import path
+from optparse import OptionParser
+from subprocess import Popen, PIPE, call
+
+
+Parser = OptionParser(usage="%prog (--local | --remote | --local --remote)  [--delete [--all]]")
+
+# -----------------------------------------------------------------------------
+# Global options
+Parser.add_option("--verbose", '-v',
+    dest    = "Verbose",
+    action  = "store_true",
+    default = False,
+    help    = "More verbose output."
+    )
+
+
+Parser.add_option("--local",
+    dest    = "Local",
+    action  = "store_true",
+	default = False,
+	help    = "Clean up local branches."
+    )
+
+Parser.add_option("--remote",
+    dest    = "Remote",
+    action  = "store_true",
+	default = False,
+	help    = "Clean up remote branches."
+    )
+
+Parser.add_option("--delete",
+    dest    = "Delete",
+    action  = "store_true",
+	default = False,
+	help    = "Proceed with deleting the branches that are safe."
+    )
+
+Parser.add_option("--all",
+    dest    = "All",
+    action  = "store_true",
+	default = False,
+	help    = "Do not prompt before deleting branches that are safe."
+    )
+
+# Parse command line
+Opt, Arg = Parser.parse_args()
+
+
+if Opt.All and not Opt.Delete:
+	Parser.error("--all is not valid without --delete")
+
+if not Opt.Local and not Opt.Remote:
+	Parser.error("--local and/or --remote must be specified")
+
+	
+###############################################################################
+
+
+NOT_IN_PRODUCTION_BRANCH = '^origin/Release/Production'
+SkipList = ['origin/Release/Production', 'origin/master', 'origin/HEAD']
+
+if Opt.Verbose:
+	print "Fetching..."
+
+if call(('git', 'fetch')) > 0:
+	print("An error occured!")
+	sys.exit(2)
+
+if Opt.Verbose:
+	print "Pruning..."
+
+if call(('git', 'remote', 'prune', 'origin')) > 0:
+	print("An error occured!")
+	sys.exit(2)
+	
+
+# TODO: We are not error checking these...
+if Opt.Local and Opt.Remote:
+	branches = Popen(('git', 'branch', '-a'), stdout=PIPE).communicate()[0]
+elif Opt.Local:
+	branches = Popen(('git', 'branch'), stdout=PIPE).communicate()[0]
+elif Opt.Remote:
+	branches = Popen(('git', 'branch', '-r'), stdout=PIPE).communicate()[0]
+else:
+	# Should never happen
+	sys.exit(7)
+
+
+# Get a list of branches
+BranchList = [
+	i[2:] for i in branches.split("\n") 
+	if len(i) > 2 and i[0] != '*' and i[2:] not in SkipList
+	]
+	
+DeleteList = []
+
+for Branch in BranchList:
+	
+	if Opt.Verbose:
+		print "Checking branch: %s ..." % Branch, 
+	
+	Proc = Popen(('git', 'log', '--pretty=oneline', Branch, NOT_IN_PRODUCTION_BRANCH), stdout=PIPE)
+	Logs = Proc.communicate()[0]
+
+	if Logs == '':
+		if Opt.Verbose:
+			print "Branch ok to Delete!"
+			print
+		DeleteList.append(Branch)
+	else:
+		if Opt.Verbose:
+			print "Cannot delete branch:"
+			print Logs
+			print
+			
+
+if Opt.Verbose:
+	print "-"*80
+	print 
+
+print "These branches may be deleted:"
+for i in DeleteList:
+	print "  %s" % i
+print
+
+
+# Delete them if specified
+if Opt.Delete:
+	
+	# loop over each branch that is safe to clean up
+	for Branch in DeleteList:
+		
+		if not Opt.All:
+			s = None
+			while s not in ('delete', 'n', '', 'exit'):
+				if s != None:
+					print "Bad Input!"
+				s = raw_input("%-60.60s (delete/n/exit): " % Branch)
+			
+			if s == 'exit':
+				sys.exit(0)
+			
+			if s != 'delete':
+				continue
+
+		print
+		print "Deleting %s ..." % Branch
+
+		# For remote: git push origin :<branch-name-sans-"origin/">
+		if Branch.startswith('origin/'):
+			print "Deleting remote..."
+			call(('git', 'push', 'origin', ":%s" % Branch[7:]))
+		
+		# For local: git branch -D <branch>
+		else:
+			print "Deleting Local..."
+			call(('git', 'branch', '-D', Branch))
+		
+		print
+		print
+				
+
+
+
+
+
+
+
+

@@ -1,0 +1,167 @@
+#!/usr/local/bin/python
+
+import sys
+import os
+
+from os.path 	import join, dirname, exists, abspath
+from optparse 	import OptionParser
+from xml.etree 	import cElementTree 	as ElementTree
+
+
+
+
+
+class VirtualHost(object):
+	__slots__ = ('ID', 'Protocol', 'Extra', 'ServerName', 'ServerAlias', 'DocumentRoot', 'URL', 'DevLevel')
+	
+
+def ErrorLine(sLine = ""):
+	sys.stderr.write(str(sLine) + "\n")
+
+Parser = OptionParser(usage="%prog instancepath[, ...]")
+
+Parser.add_option("-O", "--Output",
+    dest    = "outputFileName",
+    action  = "store",
+	type	= "string",
+	help    = "XML output file location",
+	default	= None
+	)
+
+# Parse command line
+Opt, Arg = Parser.parse_args()
+
+if Opt.outputFileName == None:
+	oFile = None
+	def WriteLine(sLine = ""):
+		sys.stdout.write(sLine + "\n") 
+
+else:
+	oFile = open(Opt.outputFileName, 'w')
+	def WriteLine(sLine = ""):
+		oFile.write(sLine + "\n") 
+
+
+def PrintError(sMessage):
+	sys.stderr.write(str(sMessage) + "\n")
+
+import WB4
+
+AllVirtualData = []
+ApacheConfLines = []
+
+for path in Arg:
+
+	PI = WB4.PathInfo(path)
+
+	if not exists(PI.DataFile):
+		Parser.error("Instance Data File does not exist: %s" % PI.DataFile)
+
+	try:
+		
+		InstanceVirtualData = []
+
+		oXML = ElementTree.parse(PI.DataFile)
+		InstancePath = oXML.find('')
+	
+
+		nDevLevel = int(oXML.find('DevLevel').text)
+		
+		ApacheConfLines += [s.text for s in oXML.findall('//Apache/Conf/*')]
+
+		##--------  finds Project List in instance.xml --------#
+		for oProject in oXML.find('//Project-List'):
+	  		
+			##------- iterate over each virtual host in the list ---------#
+			for oVirtualHost in oProject.find('VirtualHost-List'):
+			
+				data = VirtualHost()
+				data.DevLevel = nDevLevel
+				data.ID = oVirtualHost.attrib['ID']
+				data.Protocol = oVirtualHost.attrib['Protocol']
+				data.Extra = [n.text for n in oVirtualHost.findall('Extra/Value')]
+				data.ServerName =  oVirtualHost.find('ServerName').text
+				data.ServerAlias = [n.text for n in oVirtualHost.findall('ServerAlias/Value')]
+				data.DocumentRoot = oVirtualHost.find('DocumentRoot').text
+				data.URL = oVirtualHost.find('URL').text
+
+				for vh in InstanceVirtualData + AllVirtualData:
+					if vh.ServerName == data.ServerName:
+						ErrorLine("Removing duplicate %s..." % data.ServerName)
+						break
+				else:
+					InstanceVirtualData.append(data)
+	
+		del(oXML)
+		
+		AllVirtualData += InstanceVirtualData
+		
+		
+	except Exception, e:
+		PrintError("Skipping InstancePath: %s" % path)
+		PrintError("  "+str(e))
+
+try:
+
+
+#====================================  File Generation ====================================# 
+
+	WriteLine()
+	WriteLine("#")
+	WriteLine("# Auto-Generated configuration files")
+	WriteLine()
+	WriteLine("# start with Instance.Apache ... ")
+	WriteLine()
+
+	for line in ApacheConfLines:
+		WriteLine(line)
+	
+	
+	WriteLine()
+	WriteLine("# ... Now, VirtualHosts")
+	WriteLine()
+
+	AllVirtualData.sort(key = lambda v: "%s%s" % (v.ServerName, v.DocumentRoot))
+
+	for vh in AllVirtualData:
+	
+		if vh.Protocol == 'https':
+			WriteLine("# %s|SSL (DevLevel.%s)" % (vh.URL[8:], vh.DevLevel))
+		else:
+			WriteLine("# %s|NoSSL (DevLevel.%s)" % (vh.URL[7:], vh.DevLevel))
+	
+		WriteLine("<VirtualHost *>")
+
+		WriteLine("   ServerName %s" % vh.ServerName)
+		
+		WriteLine("   DocumentRoot %s" % vh.DocumentRoot)
+
+		if vh.ServerAlias:
+			WriteLine("   ServerAlias %s" % " ".join(vh.ServerAlias))
+
+		WriteLine("   RewriteEngine on")
+		WriteLine("   RewriteOptions inherit")
+
+		for l in vh.Extra:
+			if l.strip().startswith('SSL'):
+				ErrorLine("SSL Lines Removed from %s" % vh.ServerName)
+			elif l.strip().endswith('ssl-unclean-shutdown'):
+				ErrorLine("ssl-unclean-shutdown removed from %s" % vh.ServerName)
+			else:
+				WriteLine("   %s" % l)
+		
+
+		WriteLine("</VirtualHost>")
+		WriteLine()
+
+except Exception, e:
+	PrintError("")
+	PrintError("Exception %s raised during virtual host file generation" % e)
+	PrintError("")
+
+finally:
+	if oFile:
+		oFile.close()
+
+		
+

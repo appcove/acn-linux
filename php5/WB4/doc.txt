@@ -1,0 +1,38 @@
+
+
+
+WB4, what is it?  (in PHP)
+
+
+
+
+class WB4
+
+
+Start Path...
+
+	WB4::Load()
+		path will be defined to getcwd()
+
+	WB4::Load(__FILE__)
+		path will be defined as dirname(__FILE__)
+
+
+What does WB4::Load() do?
+
+1. Scans back up the dir tree looking for _Root.php, _Init.php, _Exec.php
+
+2. Includes _Root.php
+
+3. _Root.php must, at a minimum:
+
+	a. Call WB4::Auto() on the auto-conf generated PHP code
+	b. Create an App class:  class App extends WB4_App
+	b. Register the Project's classes with Import::Push($sClass, $path)
+	c. Call WB4::Scan()
+
+4. 
+
+
+
+

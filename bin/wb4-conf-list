@@ -1,0 +1,5 @@
+#!/bin/bash
+
+find $1 -name _Lace.py -or -name _Knot.py
+
+

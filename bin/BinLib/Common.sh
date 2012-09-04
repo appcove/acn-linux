@@ -1,0 +1,5 @@
+
+
+BinPath=`dirname $0`
+
+

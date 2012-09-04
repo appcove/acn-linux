@@ -1,0 +1,60 @@
+#!/usr/local/bin/python
+
+# This is poorly documented.
+# the purpose is to setup your working environment to reference the specified IZRM installation
+
+# To use, do something like this:
+
+# eval `izrm-init path/to/the/izrm`
+
+try:
+	import sys
+	import os
+	from os.path import realpath, exists, dirname, join
+	
+	try:
+		sPath = realpath(sys.argv[1])
+	except:
+		sPath = realpath(".")
+
+	if not exists(join(sPath, ".izrm")):
+		raise Exception("'%s' is not a valid IZRM directory" % sPath)
+
+	sOut = 'export IZRM_PATH="%s";' % sPath
+
+	try:
+		pl = os.environ["PATH"].split(":")
+	except KeyError:
+		pl = []
+
+	for p in pl:
+		if exists(join(dirname(p), ".izrm")):
+			pl.remove(p)
+
+	pl.append(join(sPath, "Bin"))
+
+	sOut += 'export PATH="%s";' % ":".join(pl)
+
+	try:
+		pl = os.environ["PYTHONPATH"].split(":")
+	except KeyError:
+		pl = []
+		
+	for p in pl:
+		if exists(join(dirname(p), ".izrm")):
+			pl.remove(p)
+
+	pl.insert(0, join(sPath, "Python"))
+
+	sOut += 'export PYTHONPATH="%s";' % ":".join(pl)
+
+	print sOut
+
+except Exception, e:
+	print 'echo "An error has occured! %s"' % e.message.replace('\\', '\\\\').replace('"', '\\"').replace("$", "\\$")
+
+
+
+
+
+

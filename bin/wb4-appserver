@@ -1,0 +1,78 @@
+#!/usr/local/bin/python
+
+
+#TODO: look at Parser.destroy() to break cyclic memory references..  Perhaps destroy it before entering the main workers.
+
+import sys
+import os
+from os.path import join, dirname, exists
+from optparse import OptionParser
+from xml.etree import cElementTree as ElementTree
+
+Parser = OptionParser(usage="%prog instancepath[, ...]")
+
+# -----------------------------------------------------------------------------
+# Global options
+Parser.add_option("--verbose", '-v',
+    dest    = "Verbose",
+    action  = "store_true",
+    default = False,
+    help    = "More verbose output."
+    )
+
+Parser.add_option("--DebugLevel", '-d',
+    dest    = "DebugLevel",
+    action  = "store",
+    default = 0,
+	type	= "int",
+    help    = "Amount of debugging info [0-5]."
+    )
+
+
+# Parse command line
+Opt, Arg = Parser.parse_args()
+
+if Opt.DebugLevel not in (0,1,2,3,4,5):
+	Parser.error("Invalid --DebugLevel %s." % Opt.DebugLevel)
+
+# Get path to instance
+if len(Arg) == 0:
+	InstancePaths = ['.']
+else:
+	InstancePaths = Arg
+
+import WB4
+
+if Opt.DebugLevel:
+	WB4.EnableDEBUG(Opt.DebugLevel)
+
+if DE:BUG(1, "Starting `Server`: PID %s" % os.getpid())
+	
+###############################################################################
+
+from WB4.AppServer import Server
+	
+
+# Setup the projects
+WorkerPath = join(dirname(__file__), 'wb4-appserver-worker')
+
+# Init the server
+Server.Init(InstancePaths, WorkerPath)
+
+
+# Start in enter->debug mode if DE > 0
+if DE > 0:
+	import pdb
+	
+	while 1:
+		Server.Run()
+		pdb.set_trace()
+
+# Start in enter->exit mode
+else:
+	Server.Run()
+
+
+
+
+
