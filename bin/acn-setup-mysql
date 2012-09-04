@@ -33,6 +33,11 @@ try:
 
         print()
         print('---')
+        print()
+        max_allowed_packet = GetInput_Int('max_allowed_packet (MB as integer) (DEF)? ', Default=16, MinValue=1, MaxValue=1024)
+
+        print()
+        print('---')
         print("innodb_buffer_pool_size should be up to 25% of ram.")
         print()
         innodb_buffer_pool_size = GetInput_Int('innodb_buffer_pool_size (MB as integer) (DEF)? ', Default=128, MinValue=1)
@@ -47,6 +52,7 @@ try:
         print('--- WRITING my.cnf ---')
         data = ReadSystemFile('etc/my.cnf')
         data = data.replace('{max_connections}', str(max_connections))
+        data = data.replace('{max_allowed_packet}', str(max_allowed_packet))
         data = data.replace('{innodb_buffer_pool_size}', str(innodb_buffer_pool_size))
         data = data.replace('{key_buffer_size}', str(key_buffer_size))
         WriteSystemFile('etc/my.cnf', data)
