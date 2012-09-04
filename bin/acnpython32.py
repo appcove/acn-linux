@@ -54,10 +54,10 @@ class Config:
 
 
 #==============================================================================
-# Add THIS acn-linux's python31 directory to the near-beginning of sys.path
+# Add THIS acn-linux's python32 directory to the near-beginning of sys.path
 
 Path = dirname(abspath(sys.path[0]))
-PythonPath = join(Path, 'python32')
+PythonPath = join(Path, 'python3.2')
 
 try:
   sys.path.remove(PythonPath)

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import acnpython26
+
 import sys
 import os
 

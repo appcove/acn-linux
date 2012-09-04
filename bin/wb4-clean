@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+import acnpython26
+
+
 
 #TODO: look at Parser.destroy() to break cyclic memory references..  Perhaps destroy it before entering the main workers.
 
