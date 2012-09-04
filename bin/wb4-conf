@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 
 
 #TODO: look at Parser.destroy() to break cyclic memory references..  Perhaps destroy it before entering the main workers.
