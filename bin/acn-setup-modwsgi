@@ -11,8 +11,7 @@ try:
   
   
   if GetInput_YesNo('Install mod_wsgi for python 3.2 (DEF)? ', Default='yes'):
-    #call(('yum', 'install') + Config.mod_wsgi.PackageList + ('--enablerepo=ius-testing',))
-    call(('rpm', '-i', join(Path, 'rpms', 'python32-mod_wsgi-3.4-0.ius.el6.x86_64.rpm')))
+    call(('yum', 'install') + Config.mod_wsgi.PackageList + ('--enablerepo=ius-testing',))
     print('   ... done')
     print()
 
