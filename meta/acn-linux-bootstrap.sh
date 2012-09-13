@@ -8,7 +8,7 @@ echo 'Install IUS'
 rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-10.ius.el6.noarch.rpm
 
 echo 'Install [git, vim-enhanced, python32]'
-yum install -y git vim-enhanced python32 --enablerepo=ius-testing
+yum install -y git vim-enhanced python32
 
 echo 'cd to /opt'
 cd /opt
