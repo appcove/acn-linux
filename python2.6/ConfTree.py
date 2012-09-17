@@ -46,6 +46,8 @@ class Tree(object):
 			'islink'		: path.islink,
 			'join'			: path.join,
 			'now'			: time.time,
+			'str'			: str,
+			'int'			: int,
 			}
 
 		self.Log = [
@@ -157,7 +159,7 @@ class Tree(object):
 				if isinstance(e, OSError):
 					msg = "OSError: [Errno %s] %s: '%s'" % (e.errno, e.strerror, e.filename)
 				else:
-					msg = "%s: %s" % (e.__class__.__name__, e.message)
+					msg = "%s: %s" % (e.__class__.__name__, str(e))
 				
 				# Must explicitly break these references
 				del(e, tb, tbe)
@@ -573,6 +575,7 @@ class Node(object):
 				# No onNew event, raise an exception
 				raise AttributeError("Cannot read uninitialized value for field '%s'." % sName)
 
+
 	Get = __getattr__
 
 	#==============================================================================================
@@ -632,7 +635,7 @@ class Node(object):
 			try:
 				v = self.Get(sName)
 			except AttributeError, e:
-				v = "AttributeError: " + e.message
+				v = "AttributeError: " + str(e)
 
 			print (DUMP_SEP*nLevel) + sName + " =",
 			

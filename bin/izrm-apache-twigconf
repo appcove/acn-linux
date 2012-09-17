@@ -14,7 +14,7 @@ from xml.etree 	import cElementTree 	as ElementTree
 
 
 class VirtualHost(object):
-	__slots__ = ('ID', 'Protocol', 'Extra', 'ServerName', 'ServerAlias', 'DocumentRoot', 'URL', 'DevLevel')
+	__slots__ = ('ID', 'Protocol', 'Extra', 'ServerName', 'ServerAlias', 'DocumentRoot', 'URL', 'DevLevel', 'IP', 'Port')
 	
 
 def ErrorLine(sLine = ""):
@@ -80,6 +80,8 @@ for path in Arg:
 				data = VirtualHost()
 				data.DevLevel = nDevLevel
 				data.ID = oVirtualHost.attrib['ID']
+				data.IP = oVirtualHost.attrib['IP']
+				data.Port = oVirtualHost.attrib['Port']
 				data.Protocol = oVirtualHost.attrib['Protocol']
 				data.Extra = [n.text for n in oVirtualHost.findall('Extra/Value')]
 				data.ServerName =  oVirtualHost.find('ServerName').text
@@ -132,7 +134,7 @@ try:
 		else:
 			WriteLine("# %s|NoSSL (DevLevel.%s)" % (vh.URL[7:], vh.DevLevel))
 	
-		WriteLine("<VirtualHost *>")
+		WriteLine("<VirtualHost {0}:{1}>".format(vh.IP, vh.Port))
 
 		WriteLine("   ServerName %s" % vh.ServerName)
 		

@@ -81,7 +81,7 @@ except TreeException, e:
 	print EM
 	for i in e.Stack:
 		print "  ", i
-	print "  ", e.message
+	print "  ", str(e)
 	print 
 
 	sys.exit(2)
@@ -106,7 +106,7 @@ except Exception, e:
 
 	print
 	print EM
-	print "  ", e.message
+	print "  ", str(e)
 	print 
 
 	sys.exit(3)

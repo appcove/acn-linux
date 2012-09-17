@@ -82,8 +82,8 @@ class MySQL(Node):
 ####################################################################################################
 class VirtualHost(Node):
 	
-	FieldSpec 			= ('ID', 'Protocol', 'Extra', 'ServerName', 'ServerAlias', 'DocumentRoot', 'URL')
-	XMLAttribs			= ('ID', 'Protocol')
+	FieldSpec 			= ('ID', 'Protocol', 'IP', 'Port', 'Extra', 'ServerName', 'ServerAlias', 'DocumentRoot', 'URL')
+	XMLAttribs			= ('ID', 'Protocol', 'IP', 'Port')
 
 	onNew_Protocol		= lambda self: 'http'
 	def onSet_Protocol(self, value):
@@ -98,6 +98,12 @@ class VirtualHost(Node):
 
 	onNew_Extra			= lambda self: []
 	onSet_Extra			= Node.List
+
+	onNew_IP			= lambda self: '*'
+	onSet_IP			= Node.String
+
+	onNew_Port			= lambda self: 80
+	onSet_Port			= Node.Integer
 
 	def onSet_ServerName(self, value):
 		return self.ParentInstance.MangleHost(value)
