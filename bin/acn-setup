@@ -32,6 +32,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-apache',          'Install/setup apache'              ),
   (N(),    'acn-command', 'acn-setup-php',             'Install/setup php 5.4'             ),
   (N(),    'acn-command', 'acn-setup-modwsgi',         'Install/setup mod_wsgi'            ),
+  (N(),    'acn-command', 'acn-setup-redis',           'Install/setup redis'               ),
   (N(),    'acn-command', 'acn-setup-yumcron',         'Install/setup yum-cron'            ),
   (N(),    'acn-command', 'acn-setup-systemupdate',    'Update all packages'               ),
   ('exit', 'exit',        '',                          'Exit the program'                  ),
