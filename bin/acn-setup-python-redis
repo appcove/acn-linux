@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Install {0} (DEF)? '.format(Config.PythonRedis.PackageList), Default='yes'):
+    call(('yum', 'install', '--enablerepo=ius-testing') + Config.PythonRedis.PackageList)
+    print('   ... done')
+    print()
+
+  
+  if GetInput_YesNo('Try to import it (DEF)? ', Default='yes'):
+    print("Importing `redis`...")
+    import redis
+    print(redis)
+    print('   ... done')
+    print()
+
+    print("Importing `hiredis`...")
+    import hiredis
+    print(hiredis)
+    print('   ... done')
+    print()
+
+  print()
+  print()
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

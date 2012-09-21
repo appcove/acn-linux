@@ -49,6 +49,8 @@ class Config:
     PackageList = ('python32-mod_wsgi',)
   class PythonPostgres:
     Package = 'python32-postgresql'
+  class PythonRedis:
+    PackageList = ('python32-redis', 'python32-hiredis')
 
 
 
