@@ -13,6 +13,7 @@ def N():
   
 
 CDEF = [
+  #ID      Type           Data (per Type)              Description
   (N(),    'acn-command', 'acn-setup-etcgit',          'Setup /etc with git'               ),
   (N(),    'acn-command', 'acn-setup-root',            'Configure root user'               ),
   (N(),    'acn-command', 'acn-setup-timezone',        'Set timzone'                       ),
@@ -24,7 +25,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-git',             'Install custom gitconfig'          ),
   (N(),    'acn-command', 'acn-setup-tree',            'Install tree'                      ),
   (N(),    'acn-command', 'acn-setup-imagemagick',     'Install ImageMagick'               ),
-  (N(),    'acn-command', 'acn-setup-deploy',          'Build deploy user'                 ),
+  (N(),    'acn-command', 'acn-setup-deploy',          'Build (acn\'ish) deploy user'      ),
   (N(),    'acn-command', 'acn-setup-nginx',           'Install/setup nginx'               ),
   (N(),    'acn-command', 'acn-setup-postgres',        'Install/setup postgresql 9.1'      ),
   (N(),    'acn-command', 'acn-setup-python-postgres', 'Install/setup python-postgresql'   ),
@@ -35,6 +36,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-modwsgi',         'Install/setup mod_wsgi'            ),
   (N(),    'acn-command', 'acn-setup-redis',           'Install/setup redis'               ),
   (N(),    'acn-command', 'acn-setup-yumcron',         'Install/setup yum-cron'            ),
+  (N(),    'acn-command', 'acn-setup-mock',            'Install/setup mock and rpmbuild'   ),
   (N(),    'acn-command', 'acn-setup-systemupdate',    'Update all packages'               ),
   ('exit', 'exit',        '',                          'Exit the program'                  ),
   ]
@@ -53,7 +55,7 @@ for r in CDEF:
 AliasMap = OrderedDict(((r[0],r[0]) for r in CDEF))
 AliasMap.update(ADEF)
 
-
+input = ''
 
 try:
   while True:
@@ -61,14 +63,15 @@ try:
     print('Available Commands: ')
     i = 0
     for command, data in CommandMap.items():
-      print("  {0:.<8}{1}".format(command, data[2]))
+      print("  {0:.<8} {1:.<40} ({2})".format(command, data[2], data[1]))
+    
+    if input:
+      print()
+      print("Last command entered was: {0}".format(input))
     
     print()
-    command = CommandMap[
-      AliasMap[
-        GetInput_Choices('Enter Command: ', Choices=AliasMap.keys(), PrintChoices=False)
-        ]
-      ]
+    input = GetInput_Choices('Enter Command: ', Choices=AliasMap.keys(), PrintChoices=False)
+    command = CommandMap[AliasMap[input]]
   
     if command[0] == 'acn-command':
       try:

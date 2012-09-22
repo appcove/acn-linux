@@ -339,6 +339,10 @@ def WriteFile(FileName, data):
   open(FileName, 'w', encoding='utf-8').write(data)
   
 ###############################################################################
+def SystemFilePath(RelativePath):
+  return join(Path, 'os-template', RelativePath)
+
+###############################################################################
 
 def CopySystemFile(RelativePath):
   sp = join(Path, 'os-template', RelativePath)
