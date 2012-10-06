@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
-
+import mmap
 from acnpython32 import *
 
 try:
@@ -19,15 +19,21 @@ try:
   
   hostname = GetInput_Regex("Enter the hostname: ", Regex='^[a-zA-Z0-9-.]+$')
   check_call(('/bin/hostname', hostname))
+
+  sysconfigfile = open('/etc/sysconfig/network')
+  hosts = mmap.mmap(sysconfigfile.fileno(), 0, access=mmap.ACCESS_READ)
   
-  check_call(('/bin/sed', '--in-place', 's/^HOSTNAME=.*/HOSTNAME=%s/' % hostname, '/etc/sysconfig/network'))
-  print()  
-  print("New contents of /etc/syconfig/network:")
-  print("---")
-  call(("cat", "/etc/sysconfig/network"))
-  print("---")
-  print()
-  
+  if 'HOSTNAME' in hosts:
+    check_call(('/bin/sed', '--in-place', 's/^HOSTNAME=.*/HOSTNAME=%s/' % hostname, '/etc/sysconfig/network'))
+    print()  
+    print("New contents of /etc/syconfig/network:")
+    print("---")
+    call(("cat", "/etc/sysconfig/network"))
+    print("---")
+    print()
+  else:
+    doc = open('/etc/sysconfig/network', 'a')
+    doc.write('HOSTNAME=%s'%hostname)    
 
 except Exception as e:
   print()
