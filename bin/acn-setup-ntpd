@@ -1,0 +1,38 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython32 import *
+from getpass import getpass
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Setup ntpd to start automatically (DEF)? ', Default='yes'):
+    check_call(('chkconfig', 'ntpd', 'on'))
+    print('   ... done')
+    print()
+  
+  if GetInput_YesNo('Start ntpd? (DEF)? ', Default='yes'):
+    check_call(('service', 'ntpd', 'restart'))
+    print('   ... done')
+    print()
+  
+  print()
+  print()
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

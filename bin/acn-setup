@@ -17,6 +17,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-etcgit',          'Setup /etc with git'               ),
   (N(),    'acn-command', 'acn-setup-root',            'Configure root user'               ),
   (N(),    'acn-command', 'acn-setup-timezone',        'Set timzone'                       ),
+  (N(),    'acn-command', 'acn-setup-ntpd',            'Enable ntpd and run ntpdate'       ),
   (N(),    'acn-command', 'acn-setup-hostname',        'Set hostname'                      ),
   (N(),    'acn-command', 'acn-setup-iptables',        'Build a firewall'                  ),
   (N(),    'acn-command', 'acn-setup-user',            'Add/update a user'                 ),
