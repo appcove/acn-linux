@@ -61,21 +61,6 @@ Changing Hostname... Research this
 
 ------------------------------------------------------------------------------
 
-
-Regarding changing timezone... I think this is the culprit:
-
-https://access.redhat.com/knowledge/solutions/26308
-
-Root Cause
-Before patching system should be run with proper zones configured in it (Both file should contain same zone)
-
-/etc/sysconfig/clock
-/etc/localtime
-
-When tzdata package is updated on the system, it ran /usr/sbin/tzdata-update program which checks for /etc/sysconfig/clock. If it finds different zone than /etc/localtime then it changes time zone in that file.
-
-------------------------------------------------------------------------------
-
 Fresh install of oracle linux 6:
 
 CALLING /opt/acn-linux/bin/acn-setup-ntpd

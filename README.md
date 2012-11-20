@@ -1,3 +1,4 @@
+
 acn-linux
 =========
 
@@ -38,5 +39,40 @@ acn-setup
 This will guide you through each setup step.  We recommend you run 
 them in order, as some depend on others.  
 
+Command Reference
+-------------------------------------
 
+### acn-setup
+Calling program used to call other programs.
+
+### acn-setup-timezone
+Set the system timezone.  US/Eastern is the default.  This command shows you the time before and after it is run, so any issues may be spotted.
+
+Usage Example: 
+
+    # acn-setup-timezone
+
+    The Time is: Mon Nov 19 22:30:25 EST 2012
+
+    Set the timezone (yes)?
+    Enter the timezone (US/Eastern): US/Pacific
+
+    NOW, the Time is: Mon Nov 19 19:30:32 PST 2012
+
+
+How it works:
+
+1. Ask user for valid timezone.  Verify against `/usr/share/zoneinfo/*/*`
+2. Update the ZONE line in /etc/sysconfig/clock
+3. run tzdata-update, which updates /etc/localtime
+
+### acn-update-self 
+
+Update to the latest version of ACN
+
+
+
+
+
+vim:encoding=utf-8:ts=2:sw=2:expandtab
 

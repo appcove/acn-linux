@@ -16,11 +16,16 @@ try:
 
   if GetInput_YesNo("Set the timezone (yes)? ", Default="yes"):
     while True:
-      tz = GetInput_Regex("Enter the timezone (America/New_York): ", Regex="^[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+$", Default="America/New_York")
+      tz = GetInput_Regex("Enter the timezone (US/Eastern): ", Regex="^[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+$", Default="US/Eastern")
       
-      if call(('/bin/cp', join('/usr/share/zoneinfo', tz), '/etc/localtime')) > 0:
+      if call(('test', '-f', join('/usr/share/zoneinfo', tz))) > 0:
+        print("Invalid timezone.")
+        print()
         continue
       
+      check_call(("sed", "--in-place", "-r", '{s/^ZONE=.*$/ZONE="'+tz.replace('/', r'\/')+'"/}', "/etc/sysconfig/clock"))
+      check_call(('/usr/sbin/tzdata-update'))      
+
       break
     pass#while
 
@@ -32,6 +37,7 @@ try:
   pass#if 
     
 except Exception as e:
+  raise
   print()
   print()
   print('*** Fatal Error ***')
