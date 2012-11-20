@@ -41,14 +41,10 @@ try:
   while True:
     if GetInput_YesNo('Install acn version of nginx.conf (DEF)? ', Default='yes'):
       try:
-        SERVER_PRIMARY_IP = GetInput_IPv4('Primary IP address for nginx to listen on: ')
         SERVER_ERROR_LOG = GetInput_FilePath('Error Log Location (DEF): ', Default=Config.Nginx.SERVER_ERROR_LOG)
-        SERVER_DOCUMENT_ROOT = GetInput_DirectoryPath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
        
         data = ReadSystemFile('etc/nginx/nginx.conf')
-        data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP + ':80')
         data = data.replace('{SERVER_ERROR_LOG}', SERVER_ERROR_LOG)
-        data = data.replace('{SERVER_DOCUMENT_ROOT}', SERVER_DOCUMENT_ROOT)
         WriteSystemFile('etc/nginx/nginx.conf', data)
         print('   ... done')
         print()
@@ -63,7 +59,27 @@ try:
     check_call('echo "# Emptied by ACN on $(date)" > /etc/nginx/conf.d/default.conf', shell=True)
     print('   ... done')
     print()
+ 
   
+  while True:
+    if GetInput_YesNo('Create /etc/nginx/conf.server.d/test.conf (DEF)? ', Default='yes'):
+      try:
+        SERVER_PRIMARY_IP = GetInput_IPv4('Primary IP address for nginx to listen on: ')
+        SERVER_DOCUMENT_ROOT = GetInput_DirectoryPath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
+       
+        data = ReadSystemFile('etc/nginx/conf.server.d/test.conf')
+        data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP + ':80')
+        data = data.replace('{SERVER_DOCUMENT_ROOT}', SERVER_DOCUMENT_ROOT)
+        WriteSystemFile('etc/nginx/conf.server.d/test.conf', data)
+        print('   ... done')
+        print()
+      except KeyboardInterrupt:
+        print()
+        print()
+        continue
+    break
+
+
 
   if GetInput_YesNo('Start nginx? (DEF)? ', Default='yes'):
     check_call(('service', 'nginx', 'restart'))

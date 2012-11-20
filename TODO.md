@@ -6,10 +6,6 @@ acn-setup-backup
 
 Maybe a reminder about /etc/hosts needing checked for XXXX.YYY.COM and XXXX ?
 
-------------------------------------------------------------------------------
-Not sure that core.autocrlf=input in the global git settings is a good idea
-
-
 -------------------------------------------------------------------------------
 Rather than creating a default server in nginx.conf, ask if the user wishes to
 place a server in conf.server.d/default.conf
