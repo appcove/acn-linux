@@ -68,10 +68,35 @@ How it works:
 
 ### acn-update-self 
 
-Update to the latest version of ACN
+Update to the latest version of ACN.  It is assuming you are sitting on the `master` branch, so if you are not, it will not work as expected.
+
+Usage Example:
+
+    # acn-update-self
+
+    Do you want to update "/opt/acn-linux" to the latest? (yes)?
+    remote: Counting objects: 11, done.
+    remote: Compressing objects: 100% (1/1), done.
+    remote: Total 6 (delta 5), reused 6 (delta 5)
+    Unpacking objects: 100% (6/6), done.
+    From git://github.com/appcove/acn-linux
+       5b3d1eb..c91c781  master     -> origin/master
+    Updating 5b3d1eb..c91c781
+    Fast-forward
+     README.md              |   36 ++++++++++++++++++++++++++++++++++++
+     TODO.md                |   15 ---------------
+     bin/acn-setup-timezone |   10 ++++++++--
+     3 files changed, 44 insertions(+), 17 deletions(-)
+
+How it works:
+
+1. Change to the /opt/acn-linux directory
+2. Run `git pull`
 
 
 
+
+-----------------------------
 
 
 vim:encoding=utf-8:ts=2:sw=2:expandtab
