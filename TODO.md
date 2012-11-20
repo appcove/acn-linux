@@ -17,12 +17,6 @@ place a server in conf.server.d/default.conf
 ------------------------------------------------------------------------------
 Consider vim 2-space modeline at top of each file
 
-
--------------------------------------------------------------------------------
-Should "core.autocrlf = input" be the default?
-NO NO NO
-Fix this
-
 -------------------------------------------------------------------------------
 acn-setup-etcgit
 1. ask if we should ignore .properties  (especially if using comvault)
