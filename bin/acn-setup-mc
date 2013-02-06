@@ -1,0 +1,67 @@
+#!/usr/bin/python3.3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython33 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Install Midnight Commander (DEF)? ', Default='yes'):
+    call(('yum', 'install', 'mc'))
+    print('   ... done')
+    print()
+
+ 
+  while True:
+    if not GetInput_YesNo('Do you want to modify a user to use acn mc ini (DEF)? ', Default='yes'):
+      break
+    try:
+      print()
+      user = GetInput_Regex("Enter the username to modify: ", Regex='^[a-zA-Z0-9_-]+$')
+      print()
+
+      if call(('id', user)) > 0:
+        print("Error: user '{0}' does not exist.  Please add the user first.".format(user))
+        print()
+        continue
+      print()
+
+      homedir = join('/home', user)  # Note lack of trailing '/' is important to rsync
+      if not exists(homedir):
+        print("Error: user home directory '{0}' does not exist!".format(homedir))
+        print()
+        continue
+
+      
+      check_call(('sudo', '-u', user, 'rsync', '-av', '--exclude=.gitignore', SystemFilePath('home/mc-user/.mc'), homedir))
+      print()
+      print('... done')
+      print()
+
+      
+    except KeyboardInterrupt:
+      print()
+      print()
+      continue
+    
+  pass#while
+
+
+
+  
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()

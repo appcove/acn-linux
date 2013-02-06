@@ -1,7 +1,7 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.3
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 
-from acnpython32 import *
+from acnpython33 import *
 
 try:
   print()
@@ -11,7 +11,7 @@ try:
   
   
   if GetInput_YesNo('Install {0} (DEF)? '.format(Config.PythonPostgres.Package), Default='yes'):
-    call(('yum', 'install', Config.PythonPostgres.Package))
+    call(('yum', 'install', '--enablerepo=ius-testing', Config.PythonPostgres.Package))
     print('   ... done')
     print()
 

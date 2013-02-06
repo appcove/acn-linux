@@ -1,7 +1,7 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.3
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 
-from acnpython32 import *
+from acnpython33 import *
 
 try:
   print()
@@ -10,8 +10,8 @@ try:
     print()
   
   
-  if GetInput_YesNo('Install mod_wsgi for python 3.2 (DEF)? ', Default='yes'):
-    call(('yum', 'install') + Config.mod_wsgi.PackageList)
+  if GetInput_YesNo('Install mod_wsgi for python 3.3 (DEF)? ', Default='yes'):
+    call(('yum', 'install', '--enablerepo=ius-testing') + Config.mod_wsgi.PackageList)
     print('   ... done')
     print()
 
@@ -41,9 +41,9 @@ try:
         print()
         RPAFproxy_ips = RPAFproxy_ips or ['127.0.0.1']
         
-        print('--- WRITING /etc/httpd/conf.d/python32-mod_wsgi.conf ---')
-        data = ReadSystemFile('etc/httpd/conf.d/python32-mod_wsgi.conf')
-        WriteSystemFile('etc/httpd/conf.d/python32-mod_wsgi.conf', data)
+        print('--- WRITING /etc/httpd/conf.d/python33-mod_wsgi.conf ---')
+        data = ReadSystemFile('etc/httpd/conf.d/python33-mod_wsgi.conf')
+        WriteSystemFile('etc/httpd/conf.d/python33-mod_wsgi.conf', data)
         print('   ... done')
         print()
         

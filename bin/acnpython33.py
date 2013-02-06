@@ -21,10 +21,11 @@ class Config:
     SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
   class Postgres:
-    RepoRPM = 'http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-redhat91-9.1-5.noarch.rpm'
-    ServerPackage = 'postgresql91-server'
-    ClientPackage = 'postgresql91'
-    ServiceName = 'postgresql-9.1'
+    RepoRPM = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm'
+    ServerPackage = 'postgresql92-server'
+    ClientPackage = 'postgresql92'
+    ServiceName = 'postgresql-9.2'
+    InstallDir = '/var/lib/pgsql/9.2'
   class MySQL:
     ServerPackage = 'mysql-server'
     ClientPackage = 'mysql'
@@ -46,11 +47,11 @@ class Config:
       'php54-xml',
       )
   class mod_wsgi:
-    PackageList = ('python32-mod_wsgi',)
+    PackageList = ('python33-mod_wsgi',)
   class PythonPostgres:
-    Package = 'python32-postgresql'
+    Package = 'python33-postgresql'
   class PythonRedis:
-    PackageList = ('python32-redis', 'python32-hiredis')
+    PackageList = ('python33-redis', 'python33-hiredis')
 
 
 
@@ -345,6 +346,11 @@ def SystemFilePath(RelativePath):
 ###############################################################################
 
 def CopySystemFile(RelativePath):
+  
+  # Make any absolute paths relative
+  if RelativePath.startswith('/'):
+    RelativePath = RelativePath[1:]
+  
   sp = join(Path, 'os-template', RelativePath)
   dp = join('/', RelativePath)
 
@@ -352,7 +358,6 @@ def CopySystemFile(RelativePath):
     raise Exception("Specified path does not exist: {0}".format(sp))
 
   shutil.copyfile(sp, dp)
-
 
 ###############################################################################
 
@@ -367,6 +372,11 @@ def ReadSystemFile(RelativePath):
 ###############################################################################
 
 def WriteSystemFile(RelativePath, Data):
+  
+  # Make any absolute paths relative
+  if RelativePath.startswith('/'):
+    RelativePath = RelativePath[1:]
+
   dp = join('/', RelativePath)
   open(dp, 'w', encoding='utf-8').write(Data)
 
