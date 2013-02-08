@@ -3,15 +3,24 @@
 
 from acnpython33 import *
 
+from os import symlink
+
 try:
   print()
   if not exists('/etc/.git'):
     print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
     print()
   
+    
   
   if GetInput_YesNo('Install the official postgresql yum repository (DEF)? ', Default='yes'):
-    call(("rpm", "-Uvh", Config.Postgres.RepoRPM))
+    if Config.OS.Name == 'centos':
+      call(("rpm", "-Uvh", Config.Postgres.RepoRPM_Centos))
+    elif Config.OS.Name in ('redhat', 'oracle'):
+      call(("rpm", "-Uvh", Config.Postgres.RepoRPM_RHEL))
+    else:
+      raise Exception('OS unknown')
+
     print('   ... done')
     print()
 
@@ -20,6 +29,15 @@ try:
     call(('yum', 'install', Config.Postgres.ServerPackage, Config.Postgres.ClientPackage))
     print('   ... done')
     print()
+  
+  # Note this is a bug handler
+  if Config.OS.Name in ('oracle',):
+    print('There is (or was) a bug in installing the RHEL version of PostgreSQL 9.2 on Oracle Linux.')
+    if GetInput_YesNo('Do you want to create a symbolic link from /etc/ld.so.conf.d and run ldconfig (DEF)? ', Default='no'):
+      os.symlink('/usr/pgsql-9.2/share/postgresql-9.2-libs.conf', '/etc/ld.so.conf.d/postgresql-9.2-libs.conf')
+      call(('ldconfig',))
+      print('   ... done')
+      print()
 
   if GetInput_YesNo('Setup postgresql to start automatically (DEF)? ', Default='yes'):
     check_call(('chkconfig', Config.Postgres.ServiceName, 'on'))
