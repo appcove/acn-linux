@@ -16,12 +16,15 @@ import tempfile
 # Setup environment
 
 class Config:
+  class OS:
+    Name = None
   class Nginx:
     RepoRPM = 'http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm'
     SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
   class Postgres:
-    RepoRPM = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm'
+    RepoRPM_Centos = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm'
+    RepoRPM_RHEL = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-redhat92-9.2-7.noarch.rpm'
     ServerPackage = 'postgresql92-server'
     ClientPackage = 'postgresql92'
     ServiceName = 'postgresql-9.2'
@@ -54,6 +57,14 @@ class Config:
     PackageList = ('python33-redis', 'python33-hiredis')
 
 
+if exists('/etc/oracle-release'):
+  Config.OS.Name = 'oracle'
+elif exists('/etc/centos-release'):
+  Config.OS.Name = 'centos'
+elif exists('/etc/redhat-release'):
+  Config.OS.Name = 'redhat'
+else:
+  raise Exception("Cannot determine Config.OS.Name")
 
 
 #==============================================================================
