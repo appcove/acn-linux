@@ -456,11 +456,15 @@ class FileWriter(object):
 				Language = 'Python'
 			elif sPath[-4:] == ".php":
 				Language = 'PHP'
+			elif sPath[-5:] == ".conf":
+				Language = 'Text'
 
 		if Language == 'PHP':
 			oConv = Convert_PHP
 		elif Language == 'Python':
 			oConv = Convert_Python
+		elif Language == 'Text':
+			oConv = str
 		else:
 			raise ValueError('Invalid Language argument: %s' % str(Language))
 		
@@ -479,7 +483,7 @@ class FileWriter(object):
 
 			
 	#==============================================================================================
-	
+		
 
 
 
