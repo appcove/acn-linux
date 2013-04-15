@@ -4,8 +4,12 @@
 echo 'Install EPEL'
 rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 
-echo 'Install IUS'
-rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-10.ius.el6.noarch.rpm
+OS=$(lsb_release -si | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+if [[ "$OS" == *redhat* ]]; then
+	rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-11.ius.el6.noarch.rpm
+else
+    rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/CentOS/6/x86_64/ius-release-1.0-11.ius.centos6.noarch.rpm
+fi
 
 echo 'Install [git, vim-enhanced, python33]'
 yum install -y git vim-enhanced python33 --enablerepo=ius-testing
