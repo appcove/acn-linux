@@ -15,7 +15,7 @@ echo 'Install [git, vim-enhanced, python33]'
 yum install -y git vim-enhanced python33 --enablerepo=ius-testing
 
 echo 'cd to /opt'
-cd /opt
+pushd /opt
 
 if [ -d acn-linux ]; then
   rm -rf acn-linux
@@ -47,5 +47,5 @@ echo "The next step would be to run: "
 echo "  acn-setup"
 echo 
 
-
+popd
 
