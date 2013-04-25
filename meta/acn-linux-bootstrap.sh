@@ -23,20 +23,22 @@ fi
 
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
-
 popd
 
 pushd /opt/acn-linux
-BRANCH=$(git branch | sed -e s/\\*//g)
-x=1
+echo "Getting remote branches"
+for i in $(git branch | sed 's/^.//'); do git checkout $i -q; git fetch -q; done
+
 echo "Which branch would you like to use (enter defaults to master): "
-for i in $BRANCH
+x=1
+for commit in $(git branch | sed 's/^.//')
 do
-  echo $((x++)). $i
+  branches[$x]=${commit}
+  echo $((x++)). $commit
 done
-read USERCHOICE
-if ((1<=$x && $x<=$i)); then
-  git checkout "${BRANCH[$USERCHOICE]}"
+read userchoice
+if [[ $userchoice -ge 1 && $userchoice -lt ${#branches[@]} ]]; then
+  git checkout ${branches[$userchoice]}
 else
   git checkout master
 fi
