@@ -24,6 +24,23 @@ fi
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
 
+popd
+
+pushd /opt/acn-linux
+BRANCH=$(git branch | sed -e s/\\*//g)
+x=1
+echo "Which branch would you like to use (enter defaults to master): "
+for i in $BRANCH
+do
+  echo $((x++)). $i
+done
+read USERCHOICE
+if ((1<=$x && $x<=$i)); then
+  git checkout "${BRANCH[$USERCHOICE]}"
+else
+  git checkout master
+fi
+
 F="/etc/profile.d/acn-linux.sh"
 echo "Install $F"
 echo 'pathmunge /opt/acn-linux/bin' > $F
