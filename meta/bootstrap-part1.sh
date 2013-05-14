@@ -29,6 +29,7 @@ pushd /opt/acn-linux
 echo "Getting remote branches"
 
 for i in $(git branch -r | cut -f2 -d '>' | cut -f2 -d '/' | sed 's/[^a-zA-Z0-9]//g'); do git checkout $i -q; git fetch -q; done
+git checkout ius -q
 echo "Enter branch or commit (enter defaults to master): "
 x=1
 for commit in $(git branch -r | cut -f2 -d '>' | cut -f2 -d '/' | sed 's/[^a-zA-Z0-9]//g')
