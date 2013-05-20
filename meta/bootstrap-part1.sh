@@ -6,9 +6,9 @@ rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.r
 
 OS=$(lsb_release -si | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 if [[ "$OS" == *centos* ]]; then
-    rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/CentOS/6/x86_64/ius-release-1.0-11.ius.centos6.noarch.rpm	
+  rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/CentOS/6/x86_64/ius-release-1.0-11.ius.centos6.noarch.rpm	
 else
-	rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-11.ius.el6.noarch.rpm
+  rpm -Uvh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-11.ius.el6.noarch.rpm
 fi
 
 echo 'cd to /opt'
@@ -19,40 +19,47 @@ if [ -d acn-linux ]; then
 fi
 
 echo 'Install [git]'
-yum install -y git --enablerepo=ius-testing
+yum install -y git 
 
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
 popd
 
 pushd /opt/acn-linux
-echo "Getting remote branches"
+echo "Getting remote branches..."
 
-for i in $(git branch -r | cut -f2 -d '>' | cut -f2 -d '/' | sed 's/[^a-zA-Z0-9]//g'); do git checkout $i -q; git fetch -q; done
-git checkout ius -q
-echo "Enter branch or commit (enter defaults to master): "
-x=1
-for commit in $(git branch -r | cut -f2 -d '>' | cut -f2 -d '/' | sed 's/[^a-zA-Z0-9]//g')
-do
-  branches[$x]=${commit}
-  echo $((x++)). $commit
-done
 
-while read -r userchoice; do
-	if [[ $userchoice = "" ]]; then
-      git checkout master
-	else
-	  git checkout ${userchoice}
-	fi 
+while true; do
+  git branch -r
 
+  echo
+  echo "Please enter a git branch, tag, or commit to use, or simply press enter to use origin/HEAD: "
+
+  read -r userchoice
+   
+  # If the user enters nothing, then we are already on HEAD, and that is fine.
+  # Otherwise, try to check it out and repeat on failure.
+  if [[ $userchoice = "" ]]; then
+    break
+  else
+    basechoice=$(basename $userchoice)
+    git checkout -b ${basechoice} --no-track ${userchoice}
+  
+    # If the git checkout was successful, then break.  Otherwise, repeat the question.
     if [ $? -eq 0 ]; then
-		break
-	else
-		echo "Unable to checkout branch or commit ${userchoice}. Please try again"
-	fi
+      break
+    else
+      echo
+      echo
+      echo "Unable to checkout branch or commit ${userchoice}. Please try again."
+      echo
+    fi
+  fi 
+
 done
 
 popd
 
 bashpath=$(which bash)
 $bashpath /opt/acn-linux/meta/bootstrap-part2.sh
+
