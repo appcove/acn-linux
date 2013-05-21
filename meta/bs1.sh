@@ -61,5 +61,5 @@ done
 popd
 
 bashpath=$(which bash)
-$bashpath /opt/acn-linux/meta/bootstrap-part2.sh
+$bashpath /opt/acn-linux/meta/bs2.sh
 

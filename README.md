@@ -15,7 +15,7 @@ AppCove Network extensions for RedHat Enterprise Linux and similar.
 As root, copy and paste this line onto your terminal
 
 ```bash
-curl -L 'https://github.com/appcove/acn-linux/raw/master/meta/acn-linux-bootstrap.sh' | /bin/bash && source /etc/profile
+curl -L 'https://raw.github.com/appcove/acn-linux/master/meta/bs1.sh' > acnsh && bash acnsh && . /etc/profile
 ```
 
 This does several things:
