@@ -42,9 +42,11 @@ try:
     if GetInput_YesNo('Install acn version of nginx.conf (DEF)? ', Default='yes'):
       try:
         SERVER_ERROR_LOG = GetInput_FilePath('Error Log Location (DEF): ', Default=Config.Nginx.SERVER_ERROR_LOG)
+        SERVER_ACCESS_LOG = GetInput_FilePath('Access Log Location (DEF): ', Default=Config.Nginx.SERVER_ACCESS_LOG)
        
         data = ReadSystemFile('etc/nginx/nginx.conf')
         data = data.replace('{SERVER_ERROR_LOG}', SERVER_ERROR_LOG)
+        data = data.replace('{SERVER_ACCESS_LOG}', SERVER_ERROR_LOG)
         WriteSystemFile('etc/nginx/nginx.conf', data)
         print('   ... done')
         print()

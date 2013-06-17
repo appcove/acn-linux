@@ -22,6 +22,7 @@ class Config:
     RepoRPM = 'http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm'
     SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
+    SERVER_ACCESS_LOG = '/home/deploy/Log/nginx/access.log'
   class Postgres:
     RepoRPM_Centos = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm'
     RepoRPM_RHEL = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-redhat92-9.2-7.noarch.rpm'
