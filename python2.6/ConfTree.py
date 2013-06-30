@@ -254,7 +254,7 @@ def ThingToXML(oNode, value):
 	elif isinstance(value, (IntType, FloatType, StringType)):
 		oNode.text = str(value)
 
-	elif isinstance(value, ListType):
+	elif isinstance(value, (ListType, TupleType)):
 		for value2 in value:	
 			oChildNode = ElementTree.SubElement(oNode, 'Value')
 			ThingToXML(oChildNode, value2)

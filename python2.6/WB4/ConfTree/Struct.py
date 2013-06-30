@@ -255,7 +255,7 @@ class Apache(Node):
 ####################################################################################################
 class Instance(Node):
 	
-	FieldSpec 			= ('Path', 'DevLevel', 'DevName', 'ServerName', 'ServerAddr', 'AppServer', 'Apache', 'User', 'Project')
+	FieldSpec 			= ('Path', 'DevLevel', 'DevName', 'ServerName', 'ServerAddr', 'AppServer', 'Apache', 'User', 'Project', 'PortMap', 'OtherData')
 	OtherProp			= ('PathInfo', 'MangleHost', 'MangleHostIZRM', 'Default_MySQL_Port', 'Default_MySQL_Host')
 	XMLRenames			= {'Project': 'Project-List'}
 
@@ -280,6 +280,10 @@ class Instance(Node):
 	onSet_User			= Node.String
 	
 	onNew_Project		= lambda self: ProjectCollection(self)
+
+	onNew_PortMap		= lambda self: {}
+	
+	onNew_OtherData		= lambda self: {}
 	
 	def __init__(self):
 		
