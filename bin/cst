@@ -1,0 +1,244 @@
+#!/usr/bin/python3.3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+import argparse
+import sys
+from os.path import isfile, join, abspath, exists, dirname, expanduser
+import inspect
+import textwrap
+from itertools import chain, repeat
+
+import ConfStruct
+
+parser = argparse.ArgumentParser(
+  formatter_class=argparse.RawDescriptionHelpFormatter,
+  description='''ConfStruct: The Configuration Structure
+
+ConfStruct is a tool which allows you to define a configuration tree for a 
+project and then require that the project implement that tree through a local
+configuration file. 
+
+The end result is a complete configuration which can be post-processed
+resulting in config files being generated, and so on.
+
+''',
+  )
+
+
+parser.add_argument(
+  '--system-config', 
+  dest='systemconfig', 
+  metavar='path',
+  type=str,
+  default='/etc/ConfStruct.py', 
+  help='Path to the system ConfStruct file.')
+
+parser.add_argument(
+  '--user-config',
+  dest='userconfig', 
+  metavar='path',
+  type=str,
+  default='~/.ConfStruct.py', 
+  help='Path to the user owned ConfStruct file.')
+
+parser.add_argument(
+  '--project-path', 
+  dest='projectpath', 
+  metavar='path',
+  type=str,
+  default='.', 
+  help='Path to the project you wish to configure.')
+
+
+
+args = parser.parse_args()
+
+
+
+CallPath        = abspath(args.projectpath)
+ProjectPath     = CallPath
+
+for i in range(CallPath.count('/')):
+  if exists(join(ProjectPath, 'ConfStruct')):
+    break
+  else:
+    ProjectPath = dirname(ProjectPath)
+else:
+  print()
+  print("Error running ConfStruct for '" + CallPath + "' or any parent directories!")
+  print("`ConfStruct` subdirectory not found.")
+  print()
+  print("Are you sure this is a ConfStruct based project?")
+  print()
+  sys.exit(1)
+
+
+print()
+print("\033[95m== Running ConfStruct ================================================================\033[0m")
+print("\033[1m{0}\033[0m".format(ProjectPath))
+print()
+
+ConfStructPath  = join(ProjectPath, 'ConfStruct')
+
+
+###############################################################################
+def WriteFile(name, contents):
+  if '/' in name:
+    raise ValueError('WriteFile only accepts file names, not paths')
+
+  p = join(ConfStructPath, name)
+
+  with open(p, 'w') as f:
+    f.write(contents)
+    print("{0} characters written to {1}.".format(len(contents), p))
+    
+
+###############################################################################
+
+
+glreq = None  #Global requirements - run first, classes converted to instances
+gldef = None  #Global defaults
+glfix = None  #Global fixup
+glout = None  #Global output - only run if no validation errors
+lodef = None  #Local defaults
+lofix = None  #Local fixup
+usdef = None  #User defaults
+usfix = None  #User fixup
+sydef = None  #System defaults
+syfix = None  #System Fixup
+
+# run order is:
+# glreq, sydef, usdef, gldef, lodef, syfix, usfix, glfix, lofix, glout
+
+
+p = join(ProjectPath, 'ConfStruct', 'Global.py')
+print("\033[94m{0}\033[0m".format(p))
+try:
+  glreq, gldef, glfix, glout = ConfStruct.ParseAndCompileFile(p, 2, 4)
+  print("\033[92m  <Okay>\033[0m")
+except:
+  print("\033[91m  <Error>\033[0m")
+  raise
+
+p = join(ProjectPath, 'ConfStruct', 'Local.py')
+print("\033[94m{0}\033[0m".format(p))
+try:
+  lodef, lofix = ConfStruct.ParseAndCompileFile(p, 1, 2)
+  print("\033[92m  <Okay>\033[0m")
+except:
+  print("\033[91m  <Error>\033[0m")
+  raise
+
+p = abspath(expanduser(args.userconfig))
+print("\033[94m{0}\033[0m".format(p))
+if isfile(p):
+  try:
+    usdef, usfix = ConfStruct.ParseAndCompileFile(p, 1, 2)
+    print("\033[92m  <Okay>\033[0m")
+  except:
+    print("\033[91m  <Error>\033[0m")
+    raise
+else:
+  print("\033[93m  <Missing>\033[0m") 
+
+p = abspath(args.systemconfig)
+print("\033[94m{0}\033[0m".format(p))
+if isfile(p):
+  try:
+    sydef, syfix = ConfStruct.ParseAndCompileFile(p, 1, 2)
+    print("\033[92m  <Okay>\033[0m")
+  except:
+    print("\033[91m  <Error>\033[0m")
+    raise
+else:
+  sydef, syfix = None, None
+  print("\033[93m  <Missing>\033[0m") 
+
+print()
+
+
+
+# Prepare globals for executing code
+Globals = dict(
+  __builtins__        = __builtins__,
+  Path                = ProjectPath,
+  WriteFile           = WriteFile,
+  )
+
+
+# Auto-add all subclasses of BaseValue defined ConfStruct
+for name in dir(ConfStruct):
+  v = getattr(ConfStruct, name)
+  if inspect.isclass(v) and issubclass(v, ConfStruct.BaseValue):
+    Globals[name] = v
+
+# Create the RootObject class 
+class RootObject(ConfStruct.Object):
+  pass
+
+# Locals are shared across all code calls with the exception that
+# BaseValue subclasses are snatched out and converted to instances
+Locals = {}
+
+# Execute the global requirements code
+exec(glreq, Globals, Locals)
+
+# Build out the BaseObject class definition
+for name in Locals:
+  if inspect.isclass(Locals[name]) and issubclass(Locals[name], ConfStruct.BaseValue):
+    cls = Locals[name]
+    setattr(RootObject, name, cls)
+    Locals[name] = cls()
+
+# Execute the rest of the code objects in order
+for code in sydef, usdef, gldef, lodef, syfix, usfix, glfix, lofix:
+  if code:
+    exec(code, Globals, Locals)
+
+# Create and build out the BaseObject instance from the locals dict
+RootInstance = RootObject()
+for name, value in Locals.items():
+  setattr(RootInstance, name, value)
+
+
+# COLORS
+# http://stackoverflow.com/questions/287871/print-in-terminal-with-colors-using-python
+# TODO: https://gist.github.com/martin-ueding/4007035
+
+print()
+print("\033[95m== Requirements ================================================================\033[0m")
+RootObject.Describe(())
+
+print()
+print("\033[95m== Output ======================================================================\033[0m")
+Errors = []
+RootObject.Validate((), RootInstance, Errors)
+
+if Errors:
+  print()
+  print("\033[95m== There were errors.  Here are suggestions for your Local.py ==================\033[0m")
+  print()
+  for name, description in Errors:
+    print('\033[94m# ' + description + '\033[0m')
+    print(name + ' = ')
+    print()
+  sys.exit(2)
+
+
+# Execute global output
+if glout:
+  print()
+  print("\033[95m== Post Processing =============================================================\033[0m")
+  print()
+  exec(glout, Globals, Locals)
+else:
+  print()
+  print("\033[95m== There is no Post Processing to do ===========================================\033[0m")
+  print()
+  sys.exit()
+
+
+
+
+
+
