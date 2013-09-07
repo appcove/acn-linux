@@ -3,7 +3,7 @@
 from decimal import Decimal
 import re
 import inspect
-
+from os.path import join, isfile, isdir
 
 ###############################################################################
 class _Undefined:
@@ -67,11 +67,11 @@ class BaseValue():
   def __new__(cls):
     raise NotImplementedError('BaseValue is abstract')
   
-  @classmethod
+  @staticmethod
   def Describe(cls, path):
     print('\033[93m{0}:\033[0m {1}'.format('.'.join(path), cls.Description))
 
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
     raise NotImplementedError('BaseValue is abstract')
   
@@ -103,7 +103,7 @@ class Object(BaseValue):
     
     return self
 
-  @classmethod
+  @staticmethod
   def iter1(cls, path):
     #TODO: must look at __mro__ to find any classes, then use getattr on the class
     # to get an instance of them.
@@ -123,34 +123,34 @@ class Object(BaseValue):
         yield (name, cls2, path2)
 
   
-  @classmethod
+  @staticmethod
   def iter2(cls, path, value):
     
-    for name, cls2, path2 in cls.iter1(path):
+    for name, cls2, path2 in cls.iter1(cls, path):
         # Get current value from instance
         value2 = value.__dict__.get(name, _Undefined)
         yield (name, cls2, path2, value2)
   
-  @classmethod
+  @staticmethod
   def Describe(cls, path):
     
     if len(path):
       print('\033[93m{0}:\033[0m {1}'.format('.'.join(path), cls.Description))
 
-    for name, cls2, path2 in cls.iter1(path):
-      cls2.Describe(path2)
+    for name, cls2, path2 in cls.iter1(cls, path):
+      cls2.Describe(cls2, path2)
     
     
 
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
     if not isinstance(value, cls):
       raise TypeError("value must be of type {0}, not {1}".format(type(cls), type(value)))
 
-    for name, cls2, path2, value2 in cls.iter2(path, value):
+    for name, cls2, path2, value2 in cls.iter2(cls, path, value):
       # Replace value with the validated version 
       try:
-        setattr(value, name, cls2.Validate(path2, value2, errors))
+        setattr(value, name, cls2.Validate(cls2, path2, value2, errors))
         print('\033[92m✔ {0}:\033[0m {1} '.format('.'.join(path2), repr(value2)))
       except Exception as e:
         errors.append(('.'.join(path2), cls2.Description))
@@ -171,7 +171,7 @@ class Integer(BaseValue):
   def __new__(cls):
     return cls.Default
 
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
 
     # Pass None if allowed
@@ -238,7 +238,7 @@ class String(BaseValue):
   def __new__(cls):
     return cls.Default
   
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
     
     # Pass None if allowed
@@ -287,18 +287,18 @@ class String(BaseValue):
 
 class File(String):
   MustExist = True
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
-    value = String.Validate(path, value, errors)
+    value = String.Validate(cls, path, value, errors)
     if cls.MustExist and not isfile(value):
       raise ValueError("Directory '{0}' does not exist".format(value))
     return value
 
 class Directory(String):
   Exists = True
-  @classmethod
+  @staticmethod
   def Validate(cls, path, value, errors):
-    value = String.Validate(path, value, errors)
+    value = String.Validate(cls, path, value, errors)
     if cls.MustExist and not isdir(value):
       raise ValueError("Directory '{0}' does not exist".format(value))
     return value
@@ -337,7 +337,9 @@ class ProxiedSite(Object):
   class IP(IPAddress):
     pass
   class Port(Port):
-    pass
+    Default=80
+  class SSLPort(Port):
+    Default=443
   class ProxyIP(IPAddress):
     Default='127.0.0.1'
   class ProxyPort(Port):

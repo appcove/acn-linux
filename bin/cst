@@ -90,7 +90,7 @@ def WriteFile(name, contents):
 
   with open(p, 'w') as f:
     f.write(contents)
-    print("{0} characters written to {1}.".format(len(contents), p))
+    print("{0} characters written to {1}".format(len(contents), p))
     
 
 ###############################################################################
@@ -122,12 +122,15 @@ except:
 
 p = join(ProjectPath, 'ConfStruct', 'Local.py')
 print("\033[94m{0}\033[0m".format(p))
-try:
-  lodef, lofix = ConfStruct.ParseAndCompileFile(p, 1, 2)
-  print("\033[92m  <Okay>\033[0m")
-except:
-  print("\033[91m  <Error>\033[0m")
-  raise
+if isfile(p):
+  try:
+    lodef, lofix = ConfStruct.ParseAndCompileFile(p, 1, 2)
+    print("\033[92m  <Okay>\033[0m")
+  except:
+    print("\033[91m  <Error>\033[0m")
+    raise
+else:
+  print("\033[93m  <Missing>\033[0m") 
 
 p = abspath(expanduser(args.userconfig))
 print("\033[94m{0}\033[0m".format(p))
@@ -207,16 +210,18 @@ for name, value in Locals.items():
 
 print()
 print("\033[95m== Requirements ================================================================\033[0m")
-RootObject.Describe(())
+RootObject.Describe(RootObject, ())
 
 print()
 print("\033[95m== Output ======================================================================\033[0m")
 Errors = []
-RootObject.Validate((), RootInstance, Errors)
+RootObject.Validate(RootObject, (), RootInstance, Errors)
 
 if Errors:
   print()
   print("\033[95m== There were errors.  Here are suggestions for your Local.py ==================\033[0m")
+  print()
+  print('# vim:encoding=utf-8:ts=2:sw=2:expandtab')
   print()
   for name, description in Errors:
     print('\033[94m# ' + description + '\033[0m')
@@ -231,6 +236,7 @@ if glout:
   print("\033[95m== Post Processing =============================================================\033[0m")
   print()
   exec(glout, Globals, Locals)
+  print()
 else:
   print()
   print("\033[95m== There is no Post Processing to do ===========================================\033[0m")
