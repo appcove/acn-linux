@@ -324,6 +324,8 @@ class Port(Integer):
   Minvalue = 1
   Maxvalue = 65535
 
+_port = Port
+
 class UserPass(Object):
   class Username(String):
     pass
@@ -342,7 +344,7 @@ class ProxiedSite(Object):
     Default=443
   class ProxyIP(IPAddress):
     Default='127.0.0.1'
-  class ProxyPort(Port):
+  class ProxyPort(_port): #name hack in place because it was inheriting from this class def
     pass
   class URL_HTTP(String):
     pass
