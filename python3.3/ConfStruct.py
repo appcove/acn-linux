@@ -333,30 +333,51 @@ class UserPass(Object):
     pass
 
 
-class ProxiedSite(Object):
+# Typical usage would be `class FooSite(Site, SSLSite, SiteProxy)`
+
+
+class SiteProxy(Object):
+  class ProxyIP(IPAddress):
+    Default='127.0.0.1'
+    Description = 'IP address that backend server (e.g. apache) is listening on'
+  class ProxyPort(Port):
+    Description = 'Port that backend server (e.g. apache) is listening on'
+
+class Site(Object):
   class ServerName(String):
     pass
   class IP(IPAddress):
-    pass
+  	pass
   class Port(Port):
     Default=80
+  class URL(String):
+    pass
+
+class SSLSite(Object):
+  class SSLServerName(String):
+    pass
+  class SSLIP(IPAddress):
+    pass
   class SSLPort(Port):
     Default=443
-  class ProxyIP(IPAddress):
-    Default='127.0.0.1'
-  class ProxyPort(_port): #name hack in place because it was inheriting from this class def
-    pass
-  class URL_HTTP(String):
-    pass
-  class URL_HTTPS(String):
+  class SSLURL(String):
     pass
   class SSLCrt(File):
     Description = 'Path to SSL Crt file for this site'
     MustExist = False  #we lack permissions most likel 
-    AllowNone = True
   class SSLKey(File):
     Description = 'Path to SSL Key file for this site'
     MustExist = False  #we lack permissions most likely
-    AllowNone = True
+
+
+
+
+
+
+
+
+
+
+
 
 

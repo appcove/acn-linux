@@ -7,6 +7,7 @@ from os.path import isfile, join, abspath, exists, dirname, expanduser
 import inspect
 import textwrap
 from itertools import chain, repeat
+import getpass
 
 import ConfStruct
 
@@ -57,6 +58,7 @@ args = parser.parse_args()
 
 CallPath        = abspath(args.projectpath)
 ProjectPath     = CallPath
+User            = getpass.getuser()
 
 for i in range(CallPath.count('/')):
   if exists(join(ProjectPath, 'ConfStruct')):
@@ -165,7 +167,9 @@ print()
 Globals = dict(
   __builtins__        = __builtins__,
   Path                = ProjectPath,
+  User                = User,
   WriteFile           = WriteFile,
+  join                = join,
   )
 
 

@@ -70,7 +70,7 @@ try:
         SERVER_DOCUMENT_ROOT = GetInput_DirectoryPath('Server Document Root Location (DEF): ', Default=Config.Nginx.SERVER_DOCUMENT_ROOT)
        
         data = ReadSystemFile('etc/nginx/conf.server.d/test.conf')
-        data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP + ':80')
+        data = data.replace('{SERVER_PRIMARY_IP}', SERVER_PRIMARY_IP)
         data = data.replace('{SERVER_DOCUMENT_ROOT}', SERVER_DOCUMENT_ROOT)
         WriteSystemFile('etc/nginx/conf.server.d/test.conf', data)
         print('   ... done')
