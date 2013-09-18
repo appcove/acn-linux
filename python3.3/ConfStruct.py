@@ -4,6 +4,7 @@ from decimal import Decimal
 import re
 import inspect
 from os.path import join, isfile, isdir
+from collections import OrderedDict
 
 ###############################################################################
 class _Undefined:
@@ -74,9 +75,69 @@ class BaseValue():
   @staticmethod
   def Validate(cls, path, value, errors):
     raise NotImplementedError('BaseValue is abstract')
+
+
+class Scalar(BaseValue):
+  pass
+
+class Vector(BaseValue):
+  pass
+
+
+class Mapping(Vector, OrderedDict):
+  '''
+  '''
+  Description = 'Mapping'
+ 
+  def __repr__(self):
+    return "<{0}>".format(type(self).__name__)
+
+  def __new__(cls):
+    self = OrderedDict.__new__(cls)
+    
+    if not hasattr(cls, 'Key'):
+      raise TypeError("Mapping classes must define an inner class called 'Key'")
+
+    if not hasattr(cls, 'Value'):
+      raise TypeError("Mapping classes must define an inner class called 'Value'")
+    
+    if not (inspect.isclass(cls.Key) and issubclass(cls.Key, Scalar)):
+      raise TypeError("Inner class 'Key' must be a subclass of Scalar")
+
+    if not (inspect.isclass(cls.Value) and issubclass(cls.Value, BaseValue)):
+      raise TypeError("Inner class 'Value' must be a subclass of BaseValue")
+
+    return self
+
+  
+  @staticmethod
+  def Describe(cls, path):
+    
+    print('\033[93m{0}:\033[0m {1}\033[93m with key being\033[0m {2}'.format('.'.join(path), cls.Description, cls.Key.Description))
+    
+    mpath = path[0:-1] + (path[-1] + '[KEY]',)
+    cls.Value.Describe(cls.Value, mpath)
+    
+    
+
+  @staticmethod
+  def Validate(cls, path, self, errors):
+    if not isinstance(self, cls):
+      raise TypeError("value must be of type {0}, not {1}".format(type(cls), type(self)))
+
+
+    for key in self:
+      mpath = path[0:-1] + (path[-1] + '[{0}]'.format(key),)
+      value = self[key]
+      self[key] = cls.Value.Validate(cls.Value, mpath, value, errors)
+      
+    # Because this is and object reference, just return current instance
+    return self
   
 
-class Object(BaseValue):
+
+
+class Object(Vector):
   '''
   '''
   Description = 'Object'
@@ -93,13 +154,8 @@ class Object(BaseValue):
     classes = dir(cls)
 
     # for each item in the class dict...
-    for name in classes:
-      cls2 = getattr(cls, name)
-
-      # that is a subclass of BaseValue...
-      if inspect.isclass(cls2) and issubclass(cls2, BaseValue):
-        # Create an item in this class dict with the default 
-        self.__dict__[name] = cls2()
+    for (name, cls2, path2) in cls.iter1(cls, ('',)):
+      self.__dict__[name] = cls2()
     
     return self
 
@@ -134,7 +190,7 @@ class Object(BaseValue):
   @staticmethod
   def Describe(cls, path):
     
-    if len(path):
+    if len(path):  # Don't print root element
       print('\033[93m{0}:\033[0m {1}'.format('.'.join(path), cls.Description))
 
     for name, cls2, path2 in cls.iter1(cls, path):
@@ -159,9 +215,11 @@ class Object(BaseValue):
     # Because this is and object reference, just return current instance
     return value
 
+
+
   
 
-class Integer(BaseValue):
+class Integer(Scalar):
   Description = 'Integer'
   Minvalue = None
   Maxvalue = None
@@ -225,7 +283,7 @@ class Integer(BaseValue):
   
 
      
-class String(BaseValue):
+class String(Scalar):
   Description = 'String'
   Strip = True
   Truncate = False
