@@ -1,0 +1,119 @@
+#!/usr/bin/python
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+# vim:syntax=python
+
+import sys
+
+import boto.s3.key
+import boto.s3.connection
+import os
+from os.path import join, isfile, isdir, abspath
+import datetime
+
+from optparse import OptionParser
+
+parser = OptionParser(usage='usage: %prog [options] local-path s3-bucket')
+
+parser.add_option("-q", "--quiet", 
+  action="store_false", 
+  dest="Verbose", 
+  default=True, 
+  help="don't print status messages to stdout"
+  )
+
+parser.add_option("-x", "--dry-run", 
+  action="store_true", 
+  dest="DryRun", 
+  default=False, 
+  help="do everything but push files to S3"
+  )
+
+(options, args) = parser.parse_args()
+
+if len(args) == 0:
+  parser.print_help()
+  sys.exit(1)
+
+if len(args) != 2:
+  print "Requires 2 arguments: a local path and a S3 bucket"
+  sys.exit(1)
+
+DRYRUN = options.DryRun
+VERBOSE = options.Verbose
+PATH = args[0]
+BUCKET = args[1]
+
+if not isdir(PATH):
+  print "Source path must be a directory: " + PATH
+  sys.exit(1)
+
+PATH = abspath(PATH)
+ 
+
+print
+print '='*80
+print 'Starting Process @ '+datetime.datetime.now().isoformat()
+
+
+print
+print('Connecting and listing remote bucket "{0}":'.format(BUCKET))
+conn = boto.s3.connection.S3Connection()
+bucket = conn.get_bucket(BUCKET)
+
+remote_files = set([key.name for key in bucket.list()])
+
+if VERBOSE:
+  for f in remote_files:
+    print('  '+f)
+else:
+  print('  ' + str(len(remote_files)) + ' found')
+
+print
+print('Listing local files from "{0}":'.format(PATH))
+
+local_files = set((f for f in os.listdir(PATH) if isfile(join(PATH,f)) ))
+
+if VERBOSE:
+  for f in local_files:
+    print('  '+f)
+else:
+  print('  ' + str(len(local_files)) + ' found')
+
+
+to_upload = set.difference(local_files, remote_files)
+
+print
+print('About to upload these:')
+if VERBOSE:
+  for f in to_upload:
+    print('  '+f)
+else:
+  print('  ' + str(len(to_upload)) + ' to upload')
+
+print
+print('Uploading:')
+for f in to_upload:
+  print('  '+f+' @ '+datetime.datetime.now().isoformat())
+
+  key = boto.s3.key.Key(bucket)
+  key.key = f
+
+  try:
+    if DRYRUN:
+      size = 'DryRun'
+    else:
+      size = key.set_contents_from_filename(join(PATH,f))
+    
+    print "  >>> sent " + str(size) + ' bytes @ '+datetime.datetime.now().isoformat()
+
+  except Exception, e:
+    print "  >>> ERROR: " + str(e) +' @ '+datetime.datetime.now().isoformat()
+
+
+print
+print 
+print "***** ENDING PROCESS @ "+datetime.datetime.now().isoformat()+" *******************************"
+
+
+
+
