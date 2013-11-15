@@ -364,9 +364,9 @@ class Directory(String):
 
 class FileStruct(Object):
   class Path(Directory):
-    Description = 'Absolute path to FileStruct database with trailing slash'
-    RegexMatch = r'\/$', 'FileStuct Path MUST have a trailing slash'
+    Description = 'Absolute path to FileStruct'
     MustExist = True
+
 
 class ProjectIdentifier(String):
   RegexMatch = r'^[a-zA-Z0-9_]{1,32}', 'value must only contain [a-zA-Z0-9_]'
