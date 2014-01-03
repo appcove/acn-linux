@@ -1,0 +1,36 @@
+#!/usr/bin/python3.3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+
+#!/usr/bin/python3.3
+
+from subprocess import Popen, PIPE
+import re
+import sys
+
+if len(sys.argv) != 2:
+  sys.stderr.write('Error: no device specified\n')
+  sys.exit(1)
+else:
+  DEVICE = sys.argv[1]
+
+
+p1 = Popen(['df'], stdout=PIPE)
+p2 = Popen(['grep', DEVICE], stdin=p1.stdout, stdout=PIPE)
+p1.stdout.close()
+
+x = p2.communicate()[0].decode('utf-8')
+
+UsageMatch = re.search('([0-9]+)%', x)
+SizeMatch = re.search('([0-9]+)', x)
+
+if not UsageMatch or not SizeMatch:
+  sys.stderr.write('Error: no device found: ' + DEVICE + '\n')
+  sys.exit(2)
+
+Usage = UsageMatch.group(1)
+Size = int(SizeMatch.group(1)) // 1024
+
+print('Device={0}, PercentFull={1}, MBSize={2}'.format(DEVICE, Usage, Size))
+
+
