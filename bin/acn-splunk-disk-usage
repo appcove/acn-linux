@@ -8,11 +8,12 @@ from subprocess import Popen, PIPE
 import re
 import sys
 
-if len(sys.argv) != 2:
-  sys.stderr.write('Error: no device specified\n')
+if len(sys.argv) != 3:
+  sys.stderr.write('Usage: {0} <device> <description>\n'.format(sys.argv[0]))
   sys.exit(1)
 else:
   DEVICE = sys.argv[1]
+  DESCRIPTION = sys.argv[2]
 
 
 p1 = Popen(['df', '-P'], stdout=PIPE)
@@ -31,6 +32,6 @@ if not UsageMatch or not SizeMatch:
 Usage = UsageMatch.group(1)
 Size = int(SizeMatch.group(1)) // 1024
 
-print('Device={0}, PercentFull={1}, MBSize={2}'.format(DEVICE, Usage, Size))
+print('Device={0}, Description={1}, PercentFull={2}, MBSize={3}'.format(DEVICE, DESCRIPTION, Usage, Size))
 
 
