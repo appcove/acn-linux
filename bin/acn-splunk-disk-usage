@@ -22,7 +22,7 @@ p1.stdout.close()
 x = p2.communicate()[0].decode('utf-8')
 
 UsageMatch = re.search('([0-9]+)%', x)
-SizeMatch = re.search('([0-9]+)', x)
+SizeMatch = re.search(' ([0-9]+) ', x)
 
 if not UsageMatch or not SizeMatch:
   sys.stderr.write('Error: no device found: ' + DEVICE + '\n')
