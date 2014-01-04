@@ -15,7 +15,7 @@ else:
   DEVICE = sys.argv[1]
 
 
-p1 = Popen(['df'], stdout=PIPE)
+p1 = Popen(['df', '-P'], stdout=PIPE)
 p2 = Popen(['grep', DEVICE], stdin=p1.stdout, stdout=PIPE)
 p1.stdout.close()
 
