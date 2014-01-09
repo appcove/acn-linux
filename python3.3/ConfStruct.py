@@ -427,7 +427,13 @@ class SSLSite(Object):
     Description = 'Path to SSL Key file for this site'
     MustExist = False  #we lack permissions most likely
 
-
+class WSGIProcessGroup(Object):
+  class Threads(Integer):
+    Description = 'Number of WSGI Daemon Process threads to launch per process'
+    Default = 2
+  class Processes(Integer):
+    Description = 'Number of WSGI Daemon Processes to launch'
+    Default = 2 
 
 
 
