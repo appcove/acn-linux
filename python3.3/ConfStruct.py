@@ -368,6 +368,8 @@ class FileStruct(Object):
     MustExist = True
 
 
+
+
 class ProjectIdentifier(String):
   RegexMatch = r'^[a-zA-Z0-9_]{1,32}', 'value must only contain [a-zA-Z0-9_]'
   Description = 'Unique project identifier'
@@ -390,6 +392,25 @@ class UserPass(Object):
   class Password(String):
     pass
 
+class Postgres(Object):
+  class Host(String):
+    Default='localhost'
+  class Port(Port):
+    Default=5432
+  class Username(String):
+    pass
+  class Password(String):
+    pass
+  class Database(String):
+    pass
+  def __repr__(self):
+    return repr({
+      'host': self.Host, 
+      'port': self.Port,
+      'username': self.Username,
+      'password': self.Password,
+      'database': self.Database,
+      })
 
 # Typical usage would be `class FooSite(Site, SSLSite, SiteProxy)`
 
