@@ -407,9 +407,23 @@ class Postgres(Object):
     return repr({
       'host': self.Host, 
       'port': self.Port,
-      'username': self.Username,
+      'user': self.Username,
       'password': self.Password,
       'database': self.Database,
+      })
+
+class Redis(Object):
+  class Host(String):
+    Default='localhost'
+  class Port(Port):
+    Default=6379
+  class DB(Integer):
+    Default=0
+  def __repr__(self):
+    return repr({
+      'host': self.Host, 
+      'port': self.Port,
+      'db': self.DB,
       })
 
 # Typical usage would be `class FooSite(Site, SSLSite, SiteProxy)`
