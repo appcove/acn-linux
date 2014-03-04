@@ -1,0 +1,54 @@
+#!/usr/bin/python3.3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from subprocess import Popen, PIPE
+from collections import OrderedDict
+import re
+import sys
+import json
+import datetime
+
+
+ARGS = sys.argv[1:]
+
+if not ARGS:
+  sys.stderr.write('Usage: {0} [ts] [tsc]\n'.format(sys.argv[0]))
+  sys.stderr.write('  ts      = timestamp\n')
+  sys.stderr.write('  tsc     = TIME_WAIT connection count\n')
+  sys.exit(1)
+
+OUTPUT = OrderedDict()
+
+if 'ts' in ARGS:
+  ARGS.remove('ts')
+
+  OUTPUT['ts'] = datetime.datetime.now().isoformat()
+
+if 'twc' in ARGS:
+  ARGS.remove('twc')
+
+  p1 = Popen(['netstat', '-n'], stdout=PIPE)
+  p2 = Popen(['grep', 'TIME_WAIT'], stdin=p1.stdout, stdout=PIPE)
+  p3 = Popen(['wc', '-l'], stdin=p2.stdout, stdout=PIPE)
+  p1.stdout.close()
+  p2.stdout.close()
+
+  x = p3.communicate()[0].decode('utf-8')
+
+  CountMatch = re.search('([0-9]+)', x)
+
+  if CountMatch:
+    Count = int(CountMatch.group(1))    
+    OUTPUT['twc'] = Count
+  else:
+    sys.stderr.write('Error: TIME_WAIT: no count found\n')
+
+
+if ARGS:
+  sys.stderr.write('Error: extra args: ' + str(ARGS) + '\n')
+
+
+print(json.dumps(OUTPUT))
+
+
+
