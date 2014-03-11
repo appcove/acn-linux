@@ -281,6 +281,25 @@ class Integer(Scalar):
     return value
 
   
+class Boolean(Scalar):
+  Description = 'Boolean'
+  AllowNone = False
+ 
+  def __new__(cls):
+    return cls.Default
+
+  @staticmethod
+  def Validate(cls, path, value, errors):
+
+    # Pass None if allowed
+    if value is None: 
+      if cls.AllowNone:
+        return None
+      else:
+        raise TypeError("Value required.")
+   
+    return bool(value)
+  
 
      
 class String(Scalar):
