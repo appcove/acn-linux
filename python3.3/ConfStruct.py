@@ -431,6 +431,31 @@ class Postgres(Object):
       'database': self.Database,
       })
 
+class Braintree(Object):
+  class Environment(String):
+    Description = '"Sandbox" for development, "Production" for production'
+    def Validate(cls, path, value, errors):
+      if value not in ('Sandbox', 'Production'):
+        raise ValueError('Invalid value')
+      return value
+  class MerchantId(String):
+    Description = 'See Braintree Docs'
+  class PublicKey(String):
+    Description = 'See Braintree Docs'
+  class PrivateKey(String):
+    Description = 'See Braintree Docs'
+  class CSEKey(String):
+    Description = 'See Braintree Docs'
+  def __repr__(self):
+    return repr({
+      'Environment': self.Environment, 
+      'MerchantId': self.MerchantId,
+      'PublicKey': self.PublicKey,
+      'PrivateKey': self.PrivateKey,
+      'CSEKey': self.CSEKey,
+      })
+
+
 class Redis(Object):
   class Host(String):
     Default='localhost'
