@@ -10,6 +10,12 @@ try:
     print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
     print()
   
+  if GetInput_YesNo('Install ntp (DEF)? ', Default='yes'):
+    check_call(('yum', 'install', 'ntp'))
+    print('   ... done')
+    print()
+  
+  
   
   if GetInput_YesNo('Setup ntpd to start automatically (DEF)? ', Default='yes'):
     check_call(('chkconfig', 'ntpd', 'on'))
