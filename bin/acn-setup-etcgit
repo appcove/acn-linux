@@ -77,7 +77,7 @@ try:
     while True:
       if not GetInput_YesNo('Do you want to setup auto-commit for /etc (DEF)? ', Default='yes'):
         break
-      crontime = GetInput('Please specify a valid crontab run time (DEF): ', Default='* 3 * * *').encode()
+      crontime = GetInput('Please specify a valid crontab run time (DEF): ', Default='15 * * * *').encode()
       newcrontab = crontab + b'\n' + crontime + b'   /etc/.gitcommitall\n\n'
       print('Installing new crontab...')
       p = Popen(('crontab'), stdin=PIPE)
