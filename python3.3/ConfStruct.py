@@ -515,6 +515,31 @@ class WSGIProcessGroup(Object):
     Default = 2 
 
 
+class Pusher(Object):
+  Description = 'Information for connecting to pusher.com'
+  class host(String):
+    Description = 'pusher.com API Host'
+    Default = 'api.pusher.com'
+  class port(Port):
+    Description = 'pusher.com API Port'
+    Default = 80
+  class app_id(Integer):
+    Description = 'app_id for pusher.com application'
+  class key(String):
+    Description = 'key for pusher.com application'
+  class secret(String):
+    Description = 'secret for pusher.com application'
+  def __repr__(self):
+    return repr({
+      'host': self.host, 
+      'port': self.port,
+      'app_id': self.app_id,
+      'key': self.key,
+      'secret': self.secret,
+      })
+
+
+
 
 
 
