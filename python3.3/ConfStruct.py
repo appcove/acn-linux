@@ -519,7 +519,7 @@ class Pusher(Object):
   Description = 'Information for connecting to pusher.com'
   class host(String):
     Description = 'pusher.com API Host'
-    Default = 'api.pusher.com'
+    Default = 'api.pusherapp.com'
   class port(Port):
     Description = 'pusher.com API Port'
     Default = 80
