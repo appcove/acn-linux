@@ -30,4 +30,5 @@
         co = checkout
         st = status
         su = submodule update
+		ff = merge --ff-only
 
