@@ -26,7 +26,7 @@ try:
 
 
   if GetInput_YesNo('Install {0} (DEF)? '.format(Config.Postgres.ServerPackage), Default='yes'):
-    call(('yum', 'install', Config.Postgres.ServerPackage, Config.Postgres.ClientPackage))
+    call(('yum', 'install', Config.Postgres.ServerPackage, Config.Postgres.ClientPackage, Config.Postgres.ContribPackage))
     print('   ... done')
     print()
   
