@@ -1,0 +1,118 @@
+{
+    "collections": {
+        "PipelineCollection": {
+            "resource": "Pipeline",
+            "operations": {
+                "create": {
+                    "api_name": "CreatePipeline",
+                    "result_key": "Pipeline"
+                },
+                "each": {
+                    "api_name": "ListPipelines",
+                    "result_key": "Pipelines"
+                },
+                "test_role": {
+                    "api_name": "TestRole"
+                }
+            }
+        },
+        "PresetCollection": {
+            "resource": "Preset",
+            "operations": {
+                "create": {
+                    "api_name": "CreatePreset",
+                    "result_key": "Preset"
+                },
+                "each": {
+                    "api_name": "ListPresets",
+                    "result_key": "Presets"
+                }
+            }
+        },
+        "JobCollection": {
+            "resource": "Job",
+            "operations": {
+                "create": {
+                    "api_name": "CreateJob",
+                    "result_key": "Job"
+                },
+                "each_by_pipeline": {
+                    "api_name": "ListJobsByPipeline",
+                    "result_key": "Jobs"
+                },
+                "each_by_status": {
+                    "api_name": "ListJobsByStatus",
+                    "result_key": "Jobs"
+                }
+            }
+        }
+    },
+    "resources": {
+        "Pipeline": {
+            "shape_name": "Pipeline",
+            "identifiers": [
+                {
+                    "var_name": "id",
+                    "api_name": "$shape_name.Id"
+                }
+            ],
+            "operations": {
+                "get": {
+                    "api_name": "ReadPipeline",
+                    "result_key": "Pipeline"
+                },
+                "delete": {
+                    "api_name": "DeletePipeline"
+                },
+                "update": {
+                    "api_name": "UpdatePipeline"
+                },
+                "update_notifications": {
+                    "api_name": "UpdatePipelineNotifications"
+                },
+                "update_status": {
+                    "api_name": "UpdatePipelineStatus"
+                }
+            },
+            "relations": {}
+        },
+        "Preset": {
+            "shape_name": "Preset",
+            "identifiers": [
+                {
+                    "var_name": "id",
+                    "api_name": "$shape_name.Id"
+                }
+            ],
+            "operations": {
+                "get": {
+                    "api_name": "ReadPreset",
+                    "result_key": "Preset"
+                },
+                "delete": {
+                    "api_name": "DeletePreset"
+                }
+            },
+            "relations": {}
+        },
+        "Job": {
+            "shape_name": "Job",
+            "identifiers": [
+                {
+                    "var_name": "id",
+                    "api_name": "$shape_name.Id"
+                }
+            ],
+            "operations": {
+                "get": {
+                    "api_name": "ReadJob",
+                    "result_key": "Job"
+                },
+                "cancel": {
+                    "api_name": "CancelJob"
+                }
+            },
+            "relations": {}
+        }
+    }
+}

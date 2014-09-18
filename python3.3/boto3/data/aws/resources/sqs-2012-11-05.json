@@ -1,0 +1,93 @@
+{
+    "collections": {
+        "QueueCollection": {
+            "resource": "Queue",
+            "operations": {
+                "create": {
+                    "api_name": "CreateQueue"
+                },
+                "each": {
+                    "api_name": "ListQueues",
+                    "result_key": "QueueUrls"
+                },
+                "remove_permission": {
+                    "api_name": "RemovePermission"
+                }
+            }
+        },
+        "MessageCollection": {
+            "resource": "Message",
+            "identifiers": [
+                {
+                    "var_name": "queue_url",
+                    "api_name": "$shape_name.QueueUrl"
+                }
+            ],
+            "operations": {
+                "change_visibility_batch": {
+                    "api_name": "ChangeMessageVisibilityBatch"
+                },
+                "create": {
+                    "api_name": "SendMessage"
+                },
+                "each": {
+                    "api_name": "ReceiveMessage",
+                    "result_key": "Messages"
+                },
+                "delete_batch": {
+                    "api_name": "DeleteMessageBatch"
+                },
+                "create_batch": {
+                    "api_name": "SendMessageBatch"
+                }
+            }
+        }
+    },
+    "resources": {
+        "Queue": {
+            "shape_name": "Queue",
+            "identifiers": [
+                {
+                    "var_name": "queue_url",
+                    "api_name": "$shape_name.QueueUrl"
+                }
+            ],
+            "operations": {
+                "get_attributes": {
+                    "api_name": "GetQueueAttributes"
+                },
+                "get": {
+                    "api_name": "GetQueueUrl"
+                },
+                "add_permission": {
+                    "api_name": "AddPermission"
+                },
+                "delete": {
+                    "api_name": "DeleteQueue"
+                },
+                "set_attributes": {
+                    "api_name": "SetQueueAttributes"
+                }
+            },
+            "relations": {}
+        },
+        "Message": {
+            "shape_name": "Message",
+            "identifiers": [
+                {
+                    "var_name": "id",
+                    "api_name": "$shape_name.Id"
+                }
+            ],
+            "operations": {
+                "change_visibility": {
+                    "api_name": "ChangeMessageVisibility"
+                },
+                "delete": {
+                    "api_name": "DeleteMessage"
+                }
+            },
+            "relations": {}
+        }
+    }
+}
