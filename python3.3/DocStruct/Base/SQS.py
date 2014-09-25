@@ -52,34 +52,43 @@ def PostMessage(session, queueurl, message):
     return m
 
 
-def GetMessageFromQueue(session, queueurl, processfunc):
+def GetMessageFromQueue(session, queueurl, delete_after_receive=False):
     """Get message from the queue to process
     
     :param session: Session to use for AWS access
     :type session: boto3.session.Session
     :param queueurl: URL of the queue from which to receive messages
     :type queueurl: str
-    :param processfunc: A callable that will process the message. The callable must accept the message body as parameter
-    :type processfunc: callable
-    :return: True if the message was retrieved and handled successfully
-    :rtype: bool
+    :param delete_after_receive: If True, the message will be deleted immediately after receipt
+    :type delete_after_receive: bool
+    :return: A tuple consisting of (The message body, The message receipt handle)
+    :rtype: tuple
     """
     sqsconn = session.connect_to("sqs")
     Messages = session.get_collection("sqs", "MessageCollection")
     messages = Messages(connection=sqsconn, queue_url=queueurl)
-    ok = False
-    # Try to get 5 messages at a time by waiting atmost 20 seconds
+    # Try to get 1 message at a time by waiting at most 20 seconds
     for m in messages.each(wait_time_seconds=20, max_number_of_messages=1):
-        try:
-            ok = processfunc(m.body)
-        except Exception:
-            # TODO: we can elevate this message to the error queue to figure out what is happening
-            pass
-        else:
-            # If processing was successful, we can delete the message
-            if ok:
-                m.delete(queue_url=queueurl, receipt_handle=m.receipt_handle)
-    return ok
+        if delete_after_receive:
+            m.delete(queue_url=queueurl, receipt_handle=m.receipt_handle)
+        return m.body, m.receipt_handle
+    return None, None
+
+
+# def DeleteMessageFromQueue(session, queueurl, receipthandle):
+#     """Delete message from queue
+
+#     :param session: Session to use for AWS access
+#     :type session: boto3.session.Session
+#     :param queueurl: URL of the queue from which to delete the message
+#     :type queueurl: str
+#     :param receipthandle: An identifier acquired when receiving this message from the queue
+#     :type receipthandle: str
+#     :return: True always
+#     :rtype: bool
+#     """
+#     m.delete(queue_url=queueurl, receipt_handle=receipthandle)
+#     return True
 
 
 def ConvertURLToArn(url):

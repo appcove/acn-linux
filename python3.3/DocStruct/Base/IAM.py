@@ -8,7 +8,7 @@ from boto3.core.exceptions import ServerError
 #--------------------------------------------------
 
 
-def GetPolicyStmtForTranscoders(commonbucketprefix, topic_arn):
+def GetPolicyStmtForTranscoders(commonbucketprefix, topic_arn, queue_arn):
     # http://docs.aws.amazon.com/elastictranscoder/latest/developerguide/security.html
     return json.dumps({
         "Statement": [{
@@ -24,6 +24,10 @@ def GetPolicyStmtForTranscoders(commonbucketprefix, topic_arn):
             "Effect": "Allow",
             "Action": ["sns:Publish"],
             "Resource": [topic_arn],
+        }, {
+            "Effect": "Allow",
+            "Action": ["sqs:*"],
+            "Resource": [queue_arn],
         }, {
             "Effect": "Deny",
             "Action": [
