@@ -1,4 +1,7 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
+import json
+
+from urllib.parse import quote
 from urllib.parse import urlparse
 from boto3.core.exceptions import ServerError
 
@@ -14,14 +17,14 @@ def CreateQueue(session, queuename, message_retention_period=1209600, visibility
     :type message_retention_period: int
     :param visibility_timeout: Timeout in seconds for which a received message will be invisible to other receivers in the queue
     :type visibility_timeout: int
-    :return: URL for the new queue
+    :return: The URL of the queue
     :rtype: str
     """
     sqsconn = session.connect_to("sqs")
     Queue = session.get_resource("sqs", "Queue")
-    queue = Queue(connection=sqsconn)
+    q = Queue(connection=sqsconn)
     try:
-        qmeta = queue.get(queue_name=queuename)
+        qmeta = q.get(queue_name=queuename)
     except ServerError:
         Queues = session.get_collection("sqs", "QueueCollection")
         queues = Queues(connection=sqsconn)
@@ -30,7 +33,7 @@ def CreateQueue(session, queuename, message_retention_period=1209600, visibility
             "VisibilityTimeout": "%d" % visibility_timeout,
         })
         qmeta = q.get(queue_name=queuename)
-    return qmeta['QueueUrl']
+    return qmeta["QueueUrl"]
 
 
 def PostMessage(session, queueurl, message):
@@ -97,3 +100,29 @@ def ConvertURLToArn(url):
     regionstr = "us-east-1"
     specificstr = parsed.path.replace("/", ":")
     return "arn:aws:sqs:" + regionstr + specificstr
+
+
+def AddPermissionForSNSTopic(session, topicarn, qurl):
+    sqsconn = session.connect_to("sqs")
+    Queue = session.get_resource("sqs", "Queue")
+    q = Queue(connection=sqsconn, queue_url=qurl)
+    qarn = ConvertURLToArn(qurl)
+    policy = json.dumps({
+      "Version": "2014-09-24",
+      "Id": "{0}-{1}".format(topicarn, qarn),
+      "Statement": [
+        {
+          "Sid": "AllowSNSToSendMessageToSQS",
+          "Effect": "Allow",
+          "Principal": {"AWS": "*"},
+          "Action": "SQS:SendMessage",
+          "Resource": qarn,
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceArn": topicarn,
+            }
+          }
+        }
+      ]
+    })
+    return q.set_attributes(attributes={"Policy": policy})

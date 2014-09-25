@@ -61,10 +61,8 @@ def GetPolicyStmtForUser(inputbucketname, outputbucketname):
         "Statement": [{
             "Effect": "Allow",
             "Action": [
-                "s3:ListBucket",
                 "s3:DeleteObject",
                 "s3:PutObject",
-                "s3:GetObject",
                 "s3:PostObject",
                 "s3:PutObjectAcl",
             ],
@@ -88,6 +86,28 @@ def GetPolicyStmtForUser(inputbucketname, outputbucketname):
                 "sqs:*"
             ],
             "Resource": ["*"],
+        }]
+        })
+
+
+def GetPolicyStmtForAppUser(inputbucketname, keyprefix, queuearn):
+    return json.dumps({
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": [
+                "s3:DeleteObject",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:PostObject",
+                "s3:PutObjectAcl",
+            ],
+            "Resource": ["arn:aws:s3:::{0}/{1}/*".format(inputbucketname, keyprefix)],
+        }, {
+            "Effect": "Allow",
+            "Action": [
+                "sqs:*"
+            ],
+            "Resource": [queuearn],
         }]
         })
 

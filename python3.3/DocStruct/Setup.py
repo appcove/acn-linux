@@ -41,8 +41,12 @@ def GetGlobalConfig(session, envname, credsfilename):
     confjson = S3.GetObject(session=session, bucket=".configs", key=conffilename)
     if not confjson:
         return None
-    confdict = json.loads(confjson)
+    confdict = json.loads(confjson.decode('utf-8'))
     return Config(
+        userarn=confdict["User"]["Arn"],
+        username=confdict["User"]["Username"],
+        accesskey=confdict["User"]["AccessKey"],
+        secretkey=confdict["User"]["SecretKey"],
         rolearn=confdict["ElasticTranscoder"]["RoleArn"],
         pipelinearn=confdict["ElasticTranscoder"]["PipelineArn"],
         topicarn=confdict["ElasticTranscoder"]["TopicArn"],
@@ -51,17 +55,24 @@ def GetGlobalConfig(session, envname, credsfilename):
         inputbucketname=confdict["S3"]["InputBucket"],
         outputbucketname=confdict["S3"]["OutputBucket"],
         queueurl=confdict["SQS"]["QueueUrl"],
+        keyprefix="",
         )
 
 
 def SaveGlobalConfig(session, envname, conf):
     conffilename = _GetConfigFilename(envname)
     confjson = json.dumps({
+        "User": {
+            "Arn": conf.userarn,
+            "Username": conf.username,
+            "AccessKey": conf.accesskey,
+            "SecretKey": conf.secretkey,
+            },
         "ElasticTranscoder": {
             "RoleArn": conf.rolearn,
             "PipelineArn": conf.pipelinearn,
             "TopicArn": conf.topicarn,
-            "WebPreset": conf.webpresetarn,
+            "WebPresetArn": conf.webpresetarn,
             "WebmPresetArn": conf.webmpresetarn,
             },
         "S3": {
@@ -76,26 +87,34 @@ def SaveGlobalConfig(session, envname, conf):
     return confjson
 
 
-def GetLocalConfig(session, envname, localprefix, credsfilename):
+def GetLocalConfig(session, envname, localprefix, credsfilename, globalconfig=None):
     conffilename = _GetConfigFilename(envname, localprefix=localprefix)
     if not session:
         session = GetSession(credsfilename)
     confjson = S3.GetObject(session=session, bucket=envname, key=conffilename)
     if not confjson:
         return None
-    confdict = json.loads(confjson)
+    confdict = json.loads(confjson.decode('utf-8'))
     return Config(
         userarn=confdict["User"]["Arn"],
         username=confdict["User"]["Username"],
         accesskey=confdict["User"]["AccessKey"],
         secretkey=confdict["User"]["SecretKey"],
+        rolearn=globalconfig.rolearn if globalconfig else "",
+        pipelinearn=globalconfig.pipelinearn if globalconfig else "",
+        topicarn=globalconfig.topicarn if globalconfig else "",
+        webpresetarn=globalconfig.webpresetarn if globalconfig else "",
+        webmpresetarn=globalconfig.webmpresetarn if globalconfig else "",
+        inputbucketname=globalconfig.inputbucketname if globalconfig else "",
+        outputbucketname=globalconfig.outputbucketname if globalconfig else "",
+        queueurl=globalconfig.queueurl if globalconfig else "",
         keyprefix=confdict["S3"]["KeyPrefix"],
         )
 
 
 def SaveLocalConfig(session, envname, keyprefix, conf):
-    conffilename = _GetConfigFilename(envname, localprefix=keyname)
-    confjson = json.dumps(
+    conffilename = _GetConfigFilename(envname, localprefix=keyprefix)
+    confjson = json.dumps({
         "User": {
             "Arn": conf.userarn,
             "Username": conf.username,
@@ -104,6 +123,7 @@ def SaveLocalConfig(session, envname, keyprefix, conf):
             },
         "S3": {
             "KeyPrefix": keyprefix,
+            }
         })
     S3.PutObject(session=session, bucket=envname, key=conffilename, content=confjson)
     return confjson
@@ -162,8 +182,22 @@ def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
     # We can subscribe to the SNS topic using the SQS queue so that elastic transcoder
     # notifications are handled by the same jobs processing server
     SNS.CreateSQSQueueSubscription(session, qarn, topic.topic_arn)
+    # We also need to add a permission for the queue so that SNS is able to send messages to this queue
+    SQS.AddPermissionForSNSTopic(session, topic.topic_arn, qurl)
+    # Create a user that EC2 will use
+    user, credentials = IAM.GetOrCreateUser(
+        session,
+        envname,
+        "User-Policy-{0}".format(envname),
+        IAM.GetPolicyStmtForUser(inputbucket.bucket, inputbucket.bucket),
+        )
+    usermeta = user.get()
     # Save the environment config so that when we start instances, we can pass the config to it as well
     conftuple = Config(
+        userarn=usermeta["User"]["Arn"],
+        username=credentials.user_name,
+        accesskey=credentials.access_key_id,
+        secretkey=credentials.secret_access_key,
         rolearn=role_arn,
         pipelinearn=pipeline_arn,
         topicarn=topic.topic_arn,
@@ -172,6 +206,7 @@ def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
         outputbucketname=inputbucket.bucket,
         webpresetarn=web_presetarn,
         webmpresetarn=webm_presetarn,
+        keyprefix="",
         )
     confjson = SaveGlobalConfig(session, envname, conftuple)
     # We can also start instances to handle queue
@@ -198,9 +233,9 @@ def MakeLocalEnvironment(credsfilename, envname, keyprefix, globalconfig=None):
     # NOTE: http://blogs.aws.amazon.com/security/post/Tx1P2T3LFXXCNB5/Writing-IAM-policies-Grant-access-to-user-specific-folders-in-an-Amazon-S3-bucke
     user, credentials = IAM.GetOrCreateUser(
         session,
-        envname,
-        "User-Policy-{0}".format(envname),
-        IAM.GetPolicyStmtForUser(inputbucket.bucket, inputbucket.bucket),
+        "{0}-{1}".format(envname, keyprefix),
+        "User-Policy-{0}-{1}".format(envname, keyprefix),
+        IAM.GetPolicyStmtForAppUser(globalconfig.inputbucketname, keyprefix, SQS.ConvertURLToArn(globalconfig.queueurl)),
         )
     usermeta = user.get()
     # Save the environment config so that when we start instances, we can pass the config to it as well

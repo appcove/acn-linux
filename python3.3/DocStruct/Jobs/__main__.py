@@ -46,6 +46,7 @@ SECRET_KEY = CONFIG['User']['SecretKey']
 
 # Start an infinite loop to start polling for messages
 while True:
+    m = None
     session = GetSession(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
     try:
         m, receipt_handle = SQS.GetMessageFromQueue(session, QUEUE_URL, delete_after_receive=True)
@@ -55,11 +56,12 @@ while True:
     except (KeyboardInterrupt, SystemExit):
         pass
     except Exception as e:
-        if 'NumRetries' not in m:
-            m['NumRetries'] = 1
-        else:
-            m['NumRetries'] += 1
-        SQS.PostMessage(session, QUEUE_URL, json.dumps(m))
+        if m:
+            if 'NumRetries' not in m:
+                m['NumRetries'] = 1
+            else:
+                m['NumRetries'] += 1
+            SQS.PostMessage(session, QUEUE_URL, json.dumps(m))
     # Sleep for some time before trying again
     time.sleep(SLEEP_AMOUNT)
 
