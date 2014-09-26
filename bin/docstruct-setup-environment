@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+# Setup the path
+import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
+
+import os
+import sys
+
+
+# Add acnpython33 so that we can import GetInput_*
+if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
+  sys.path.insert(0, '/opt/acn-linux/bin')
+
+
+try:
+  from DocStruct import Setup
+except ImportError:
+  print()
+  print("Seems like your environment is not setup up correctly.")
+  print("Please make sure DocStruct.Setup is importable before running this script.")
+  print("HINT: run `setup-aws-env.py`")
+  print()
+  sys.exit(0)
+
+from acnpython33 import *
+
+
+try:
+  print("""
+This script will provision AWS resources to use with local applications.
+
+You will need to give the script admin credentials for your AWS account. These credentials
+are only required for the duration that the script is running. It may be easiest to create
+a temporary user using the Amazon AWS console. That user can be deleted after the script
+finishes setup. Remember to download credentials from AWS and provide the path to the file
+as an argument to the script.
+
+""")
+
+  if GetInput_YesNo('Do you want to continue (DEF)? ', Default='yes'):
+    print()
+    print()
+    credsfilename = GetInput_FilePath('Provide path to credentials file (DEF): ', Default='credentials.csv')
+    envname = GetInput_Regex('Please provide a valid AWS name to use for the user, bucket, and pipeline (tmt-amstmt-0 for example)? ', Regex=r'[a-z-]+')
+    
+    # We can check if the environment already exists
+    conf = Setup.GetGlobalConfig(None, envname, credsfilename)
+    if conf:
+      prompt = 'An environment with name "{0}" already exists. Would you like to reuse configuration from that environment (DEF)? '.format(envname)
+      if not GetInput_YesNo(prompt, Default='yes'):
+        print("Ok. Exiting. Please re-run this script with a different name for environment setup.")
+        print()
+        print()
+        sys.exit(0)
+    else:
+      conf = Setup.MakeGlobalEnvironment(credsfilename, envname)
+    
+    print()
+    if conf:
+      print("Environment with name {0} has been setup.".format(envname))
+    else:
+      raise Exception("Could not setup environment with name {0}".format(envname))
+    print()
+
+  print()
+  print()
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  raise
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  raise
+finally:
+  print()
+

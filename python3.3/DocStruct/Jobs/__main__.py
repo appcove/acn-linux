@@ -50,7 +50,7 @@ while True:
     session = GetSession(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
     try:
         m, receipt_handle = SQS.GetMessageFromQueue(session, QUEUE_URL, delete_after_receive=True)
-        ProcessMessage(session, m)
+        ProcessMessage(session, m, CONFIG)
     except NoMoreRetriesException:
         pass
     except (KeyboardInterrupt, SystemExit):

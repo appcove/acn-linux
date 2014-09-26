@@ -1,8 +1,7 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 import json
 
-from urllib.parse import quote
-from urllib.parse import urlparse
+from urllib import parse
 from boto3.core.exceptions import ServerError
 
 
@@ -95,7 +94,7 @@ def GetMessageFromQueue(session, queueurl, delete_after_receive=False):
 
 
 def ConvertURLToArn(url):
-    parsed = urlparse(url)
+    parsed = parse.urlparse(url)
     # regionstr = parsed.netloc.replace(".amazonaws.com", "").replace(".", ":")
     regionstr = "us-east-1"
     specificstr = parsed.path.replace("/", ":")
@@ -109,7 +108,7 @@ def AddPermissionForSNSTopic(session, topicarn, qurl):
     qarn = ConvertURLToArn(qurl)
     policy = json.dumps({
       "Version": "2014-09-24",
-      "Id": "{0}-{1}".format(topicarn, qarn),
+      "Id": "{0}{1}".format(topicarn, qarn),
       "Statement": [
         {
           "Sid": "AllowSNSToSendMessageToSQS",
@@ -126,3 +125,4 @@ def AddPermissionForSNSTopic(session, topicarn, qurl):
       ]
     })
     return q.set_attributes(attributes={"Policy": policy})
+    # return q.set_attributes(attributes={"Policy": parse.quote_plus(policy, safe="*").replace("us-east-1", "us%2Deast%2D1")})

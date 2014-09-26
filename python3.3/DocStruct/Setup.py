@@ -182,8 +182,8 @@ def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
     # We can subscribe to the SNS topic using the SQS queue so that elastic transcoder
     # notifications are handled by the same jobs processing server
     SNS.CreateSQSQueueSubscription(session, qarn, topic.topic_arn)
-    # We also need to add a permission for the queue so that SNS is able to send messages to this queue
-    SQS.AddPermissionForSNSTopic(session, topic.topic_arn, qurl)
+    # # We also need to add a permission for the queue so that SNS is able to send messages to this queue
+    # SQS.AddPermissionForSNSTopic(session, topic.topic_arn, qurl)
     # Create a user that EC2 will use
     user, credentials = IAM.GetOrCreateUser(
         session,
