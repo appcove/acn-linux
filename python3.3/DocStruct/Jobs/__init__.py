@@ -30,7 +30,7 @@ def ProcessMessage(session, message, config):
     print("Handling: {0}".format(message))
     m = json.loads(message)
     # Check if the message was sent by the transcoder
-    if not isinstance(m, 'dict'):
+    if not isinstance(m, dict):
         raise NoMoreRetriesException('{0} could not be converted to dict'.format(message))
     # Check to see who sent this message
     if 'Status' in m and m['Status'] == 'Completed':
