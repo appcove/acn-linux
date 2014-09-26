@@ -7,7 +7,7 @@ from base64 import b64encode
 from .Base import GetSession, S3, ElasticTranscoder, SNS, SQS, EC2, IAM, CloudFront
 
 
-AC_AWSAMSID = "ami-ae66c6c6"
+AC_AWSAMSID = "ami-b6b105de"  # Old AMI: "ami-ae66c6c6"
 AC_AWSPEMFILENAME = "awstest"
 
 
