@@ -33,10 +33,14 @@ def ProcessMessage(session, message, config):
     if not isinstance(m, dict):
         raise NoMoreRetriesException('{0} could not be converted to dict'.format(message))
     # Check to see who sent this message
-    if 'Status' in m and m['Status'] == 'Completed':
-        # This message was sent by the transcoder
-        S3.PutJSON(session=session, bucket=config['S3']['outputbucketname'], key=m['OutputKeyPrefix'], content=m)
-    elif 'Job' not in m or not isinstance(m.get('Params'), dict) or m.get('NumRetries', 0) >= NUM_MAX_RETRIES:
+    if m.get('Type', '') == 'Notification' and m.get('Message'):
+        msg = json.loads(m['Message'])
+        # We only have work to do if the job has completed
+        if msg and msg['state'] == 'COMPLETED':
+            # This message was sent by the transcoder
+            return S3.PutJSON(session=session, bucket=config['S3']['OutputBucket'], key="{0}output.json".format(msg['outputKeyPrefix']), content=msg)
+        return None
+    elif m.get('Type', '') != 'Job' or 'Job' not in m or not isinstance(m.get('Params'), dict) or m.get('NumRetries', 0) >= NUM_MAX_RETRIES:
         # There are a few limitations for jobs specifications
         # 1. The format is a dict
         # 2. Name of the module that contains the job to call is available by accessing the 'Job' key
@@ -45,4 +49,4 @@ def ProcessMessage(session, message, config):
         raise NoMoreRetriesException('Invalid job specification')
     # It is assumed that every job is available as a module in the Jobs package.
     jobs_module = importlib.import_module('DocStruct.Jobs.{0}'.format(m['Job']))
-    return jobs_module.Main(Session=session, **m['Params'])
+    return jobs_module.Main(Session=session, Config=config, **m['Params'])

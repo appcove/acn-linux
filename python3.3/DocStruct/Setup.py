@@ -7,7 +7,7 @@ from base64 import b64encode
 from .Base import GetSession, S3, ElasticTranscoder, SNS, SQS, EC2, IAM, CloudFront
 
 
-AC_AWSAMSID = "ami-b6b105de"  # Old AMI: "ami-ae66c6c6"
+AC_AWSAMSID = "ami-c653e2ae"
 AC_AWSPEMFILENAME = "awstest"
 
 
@@ -129,6 +129,21 @@ def SaveLocalConfig(session, envname, keyprefix, conf):
     return confjson
 
 
+def LaunchInstances(*, Session, UserData, NumInstances=1):
+    """Launches <NumInstances> number of instances
+    
+    :param Session: Session to use for communication
+    :type Session: boto3.session.Session
+    :param UserData: User data to pass to the instance
+    :type UserData: str
+    :param NumInstances: Number of instances to start
+    :type NumInstances: int
+    :return: The IDs of the instances started
+    :rtype: list
+    """
+    return [EC2.StartInstance(session=Session, imageid=AC_AWSAMSID, pemfilename=AC_AWSPEMFILENAME, userdata=UserData) for i in range(NumInstances)]
+
+
 def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
     """Sets up the environment per the new specs.
     
@@ -210,9 +225,7 @@ def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
         )
     confjson = SaveGlobalConfig(session, envname, conftuple)
     # We can also start instances to handle queue
-    instances = [
-        EC2.StartInstance(session=session, imageid=AC_AWSAMSID, pemfilename=AC_AWSPEMFILENAME, userdata=b64encode(confjson.encode("utf-8")).decode("utf-8")),
-        ]
+    instances = LaunchInstances(Session=session, UserData=b64encode(confjson.encode("utf-8")).decode("utf-8"))
     # Print out results
     return conftuple
 

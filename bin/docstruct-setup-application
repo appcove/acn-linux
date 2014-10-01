@@ -40,12 +40,6 @@ AWS.User.SecretKey = "''' + c.secretkey  + '''"
 
 AWS.SQS.QueueUrl = "''' + c.queueurl + '''"
 
-AWS.Transcoder.RoleARN = "''' + c.rolearn + '''"
-AWS.Transcoder.PipelineARN = "''' + c.pipelinearn + '''"
-AWS.Transcoder.TopicARN = "''' + c.topicarn + '''"
-AWS.Transcoder.WebPresetARN = "''' + c.webpresetarn  + '''"
-AWS.Transcoder.WebmPresetARN = "''' + c.webmpresetarn  + '''"
-
 AWS.InputBucket = "''' + c.inputbucketname + '''"
 AWS.OutputBucket = "''' + c.outputbucketname + '''"
 AWS.KeyPrefix = "''' + c.keyprefix + '''"
@@ -79,7 +73,6 @@ as an argument to the script.
         sys.exit(0)
     
     keyprefix = GetInput_Regex('Please provide an application specific key prefix (tmtmanage for example)? ', Regex=r'[a-z0-9-]+')
-
     
     # We can check if the environment already exists
     conf = Setup.GetLocalConfig(None, envname, keyprefix, credsfilename, globalconfig=globalconf)

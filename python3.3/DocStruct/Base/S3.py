@@ -308,8 +308,7 @@ def GetJSON(*, session, bucket, key):
     obj = GetObject(session=session, bucket=bucket, key=key)
     if not obj:
         return {"Status": "Progressing"}
-    json_obj = json.loads(obj)
-    return json_obj
+    return json.loads(obj.decode('utf-8'))
 
 
 def PutObject(*, session, bucket, key, content, type_="application/octet-stream"):
@@ -330,7 +329,13 @@ def PutObject(*, session, bucket, key, content, type_="application/octet-stream"
     """
     s3conn = session.connect_to("s3")
     # Make sure, we have the bucket to add object to
-    b = GetOrCreateBuckets(session, bucket)
+    try:
+        b = GetOrCreateBuckets(session, bucket)
+    except Exception as e:
+        # There is a chance that the user trying to PutObject does not have permissions
+        # to Create/List Buckets. In such cases and error is thrown. We can still try to
+        # save and assume the bucket already exists.
+        pass
     # Now we can create the object
     S3Objects = session.get_collection("s3", "S3ObjectCollection")
     s3objects = S3Objects(connection=s3conn, bucket=bucket, key=key)
@@ -338,6 +343,7 @@ def PutObject(*, session, bucket, key, content, type_="application/octet-stream"
         bindata = content.encode("utf-8")
     else:
         bindata = content
+    # Now we create the object
     return s3objects.create(key=key, acl="private", content_type=type_, body=bindata)
 
 
@@ -359,4 +365,5 @@ def PutJSON(*, session, bucket, key, content):
                      bucket=bucket,
                      key=key,
                      content=json.dumps(content),
-                     type_="application/json;charset=utf-8")
+                     type_="application/json")
+
