@@ -69,7 +69,7 @@ except AssertionError:
   
 # Supply this config to the LaunchInstance call
 session = Setup.GetSession(credsfilename=args.credsfilename)
-instances = Setup.LaunchInstances(Session=session, UserData=b64encode(json.dumps(globalconf).encode("utf-8")).decode("utf-8"),
+instances = Setup.LaunchInstances(Session=session, UserData=b64encode(globalconf).decode("utf-8"),
                                   AMI=args.ami, NumInstances=args.num_instances)
 
 # Print out new instance information
