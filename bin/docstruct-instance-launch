@@ -61,10 +61,10 @@ except AssertionError:
 # Assert that an environment with the provided name actually exists
 try:
   # Make sure the global environment exists
-  globalconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
+  globalconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename, raw=True)
   assert globalconf
 except AssertionError:
-  print("Could not find environment named %s. Please make sure the environment exists before calling this script." % args.environment_id)
+  print("Could not find environment named {0}. Please make sure the environment exists before calling this script.".format(args.environment_id))
   sys.exit(1)
   
 # Supply this config to the LaunchInstance call

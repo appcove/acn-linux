@@ -34,13 +34,15 @@ def _GetConfigFilename(localprefix=""):
     return "{0}DocStruct/{1}.json".format(localprefix, "application" if localprefix else "environment")
 
 
-def GetGlobalConfig(session, envname, credsfilename):
+def GetGlobalConfig(session, envname, credsfilename, raw=False):
     conffilename = _GetConfigFilename()
     if not session:
         session = GetSession(credsfilename)
     confjson = S3.GetObject(session=session, bucket=envname, key=conffilename)
     if not confjson:
         return None
+    if raw:
+        return confjson
     confdict = json.loads(confjson.decode('utf-8'))
     return Config(
         userarn=confdict["User"]["Arn"],
@@ -87,13 +89,15 @@ def SaveGlobalConfig(session, envname, conf):
     return conf
 
 
-def GetLocalConfig(session, envname, localprefix, credsfilename, globalconfig=None):
+def GetLocalConfig(session, envname, localprefix, credsfilename, globalconfig=None, raw=False):
     conffilename = _GetConfigFilename(localprefix=localprefix)
     if not session:
         session = GetSession(credsfilename)
     confjson = S3.GetObject(session=session, bucket=envname, key=conffilename)
     if not confjson:
         return None
+    if raw:
+        return confjson
     confdict = json.loads(confjson.decode('utf-8'))
     return Config(
         userarn=confdict["User"]["Arn"],
