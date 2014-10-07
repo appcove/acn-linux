@@ -31,7 +31,7 @@ Config = namedtuple("Config", [
 def _GetConfigFilename(localprefix=""):
     if localprefix and not localprefix.endswith("/"):
         localprefix += "/"
-    return "{0}/DocStruct/application.json".format(localprefix)
+    return "{0}DocStruct/{1}.json".format(localprefix, "application" if localprefix else "environment")
 
 
 def GetGlobalConfig(session, envname, credsfilename):
@@ -225,9 +225,9 @@ def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
         webmpresetarn=webm_presetarn,
         keyprefix="",
         )
-    confjson = SaveGlobalConfig(session, envname, conftuple)
-    # We can also start instances to handle queue
-    instances = LaunchInstances(Session=session, UserData=b64encode(confjson.encode("utf-8")).decode("utf-8"))
+    conf = SaveGlobalConfig(session, envname, conftuple)
+    # # We can also start instances to handle queue
+    # instances = LaunchInstances(Session=session, UserData=b64encode(json.dumps(conf).encode("utf-8")).decode("utf-8"))
     # Print out results
     return conftuple
 
