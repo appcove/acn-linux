@@ -58,5 +58,11 @@ if not envconf or not args.force:
 
 if envconf:
   print("Environment with name {0} has been setup.".format(args.environment_id))
+  print()
+  print("*** NOTE ***")
+  print("You will need to add a permission to the SQS queue to allow SNS topics to send messages to them")
+  print("SQS Queue URL: {0}".format(envconf.queueurl))
+  print("SNS Topic Arn: {0}".format(envconf.topicarn))
+  print()
 else:
   raise Exception("Could not setup environment with name {0}".format(args.environment_id))

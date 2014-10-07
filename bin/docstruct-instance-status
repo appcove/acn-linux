@@ -57,15 +57,15 @@ except AssertionError:
 # Assert that an environment with the provided name actually exists
 try:
   # Make sure the global environment exists
-  globalconf = Setup.GetGlobalConfig(None, args.environment_id, credsfilename)
+  globalconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
   assert globalconf
 except AssertionError:
   print("Could not find environment named %s. Please make sure the environment exists before calling this script." % args.environment_id)
   sys.exit(1)
   
 # Supply this config to the LaunchInstance call
-session = Setup.GetSession(credsfilename=credsfilename)
-instances = EC2.ListInstances()
+session = Setup.GetSession(credsfilename=args.credsfilename)
+instances = EC2.ListInstances(session=session, environmentid=args.environment_id)
 
 # Print out instance information
 for instance in instances:
