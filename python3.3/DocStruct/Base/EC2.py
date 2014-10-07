@@ -21,7 +21,7 @@ def StartInstance(*, session, imageid, pemfilename, instancetype="t1.micro", use
     """
     ec2conn = session.connect_to("ec2")
     ret = ec2conn.run_instances(image_id=imageid, min_count=1, max_count=1, keyname=pemfilename, instance_type=instancetype, user_data=userdata)
-    return ret["Instances"][0]["InstanceId"]
+    return ret["Instances"][0]
 
 
 def StopInstance(*, session, instanceid):
@@ -39,6 +39,13 @@ def StopInstance(*, session, instanceid):
     return True
 
 
+def ListInstances(*, session, environmentid, instanceid=None):
+    # TODO: look at ec2.describe_instances()
+    ec2conn = session.connect_to("ec2")
+    ret = ec2conn.describe_instances() or {}
+    return ret.get('Reservations', [{'Instances': []}])[0]['Instances']
+
+
 def TerminateInstance(*, session, instanceid):
     """Terminates an instance identified by instance id.
 
@@ -50,6 +57,4 @@ def TerminateInstance(*, session, instanceid):
     :rtype: bool
     """
     ec2conn = session.connect_to("ec2")
-    ret = ec2.terminate_instances(instance_ids=[instanceid,])
-    return True
-
+    return ec2conn.terminate_instances(instance_ids=[instanceid,])

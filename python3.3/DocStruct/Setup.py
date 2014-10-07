@@ -28,17 +28,17 @@ Config = namedtuple("Config", [
 ])
 
 
-def _GetConfigFilename(envname, localprefix=""):
-    if localprefix:
-        return "{0}/.config.json".format(localprefix, envname)
-    return "{0}-config.json".format(envname)
+def _GetConfigFilename(localprefix=""):
+    if localprefix and not localprefix.endswith("/"):
+        localprefix += "/"
+    return "{0}/DocStruct/application.json".format(localprefix)
 
 
 def GetGlobalConfig(session, envname, credsfilename):
-    conffilename = _GetConfigFilename(envname)
+    conffilename = _GetConfigFilename()
     if not session:
         session = GetSession(credsfilename)
-    confjson = S3.GetObject(session=session, bucket=".configs", key=conffilename)
+    confjson = S3.GetObject(session=session, bucket=envname, key=conffilename)
     if not confjson:
         return None
     confdict = json.loads(confjson.decode('utf-8'))
@@ -60,8 +60,8 @@ def GetGlobalConfig(session, envname, credsfilename):
 
 
 def SaveGlobalConfig(session, envname, conf):
-    conffilename = _GetConfigFilename(envname)
-    confjson = json.dumps({
+    conffilename = _GetConfigFilename()
+    conf = {
         "User": {
             "Arn": conf.userarn,
             "Username": conf.username,
@@ -82,13 +82,13 @@ def SaveGlobalConfig(session, envname, conf):
         "SQS": {
             "QueueUrl": conf.queueurl,
             }
-        })
-    S3.PutObject(session=session, bucket=".configs", key=conffilename, content=confjson)
-    return confjson
+        }
+    S3.PutJSON(session=session, bucket=envname, key=conffilename, content=conf)
+    return conf
 
 
 def GetLocalConfig(session, envname, localprefix, credsfilename, globalconfig=None):
-    conffilename = _GetConfigFilename(envname, localprefix=localprefix)
+    conffilename = _GetConfigFilename(localprefix=localprefix)
     if not session:
         session = GetSession(credsfilename)
     confjson = S3.GetObject(session=session, bucket=envname, key=conffilename)
@@ -113,8 +113,8 @@ def GetLocalConfig(session, envname, localprefix, credsfilename, globalconfig=No
 
 
 def SaveLocalConfig(session, envname, keyprefix, conf):
-    conffilename = _GetConfigFilename(envname, localprefix=keyprefix)
-    confjson = json.dumps({
+    conffilename = _GetConfigFilename(localprefix=keyprefix)
+    conf = {
         "User": {
             "Arn": conf.userarn,
             "Username": conf.username,
@@ -124,24 +124,26 @@ def SaveLocalConfig(session, envname, keyprefix, conf):
         "S3": {
             "KeyPrefix": keyprefix,
             }
-        })
-    S3.PutObject(session=session, bucket=envname, key=conffilename, content=confjson)
-    return confjson
+        }
+    S3.PutJSON(session=session, bucket=envname, key=conffilename, content=conf)
+    return conf
 
 
-def LaunchInstances(*, Session, UserData, NumInstances=1):
+def LaunchInstances(*, Session, UserData, AMI, NumInstances=1):
     """Launches <NumInstances> number of instances
     
     :param Session: Session to use for communication
     :type Session: boto3.session.Session
     :param UserData: User data to pass to the instance
     :type UserData: str
+    :param AMI: The AMI to use for launching instances
+    :type AMI: str
     :param NumInstances: Number of instances to start
     :type NumInstances: int
     :return: The IDs of the instances started
     :rtype: list
     """
-    return [EC2.StartInstance(session=Session, imageid=AC_AWSAMSID, pemfilename=AC_AWSPEMFILENAME, userdata=UserData) for i in range(NumInstances)]
+    return [EC2.StartInstance(session=Session, imageid=AMI, pemfilename=AC_AWSPEMFILENAME, userdata=UserData) for i in range(NumInstances)]
 
 
 def MakeGlobalEnvironment(credsfilename, envname, withdistribution=False):
@@ -270,9 +272,3 @@ def MakeLocalEnvironment(credsfilename, envname, keyprefix, globalconfig=None):
     confjson = SaveLocalConfig(session, envname, keyprefix, conftuple)
     # Print out results
     return conftuple
-
-
-if __name__ == '__main__':
-    import sys
-    MakeGlobalEnvironment(sys.argv[1], sys.argv[2])
-

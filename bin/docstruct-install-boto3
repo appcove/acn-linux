@@ -12,7 +12,7 @@ except ImportError:
   pass
 else:
   print()
-  print("Seems like your environment is already setup. Exiting.")
+print("Seems like boto3 and its dependencies are already installed. Exiting.")
   print()
   print()
   sys.exit(0)
@@ -39,7 +39,7 @@ try:
 
   if GetInput_YesNo('Do you want to continue (DEF)? ', Default='yes'):
     print()
-    envparentpath = GetInput_FilePath('Where should I build the environment (DEF)? ', Default=ENVPARENTPATH)
+    envparentpath = GetInput_FilePath('Where should I build the virtual environment (DEF)? ', Default=ENVPARENTPATH)
     if not os.path.exists(envparentpath):
       os.mkdir(envparentpath)
       print('Created {0}'.format(envparentpath))

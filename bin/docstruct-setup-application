@@ -7,11 +7,11 @@ import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/..
 import os
 import sys
 
+# # Add acnpython33 so that we can import GetInput_*
+# if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
+#   sys.path.insert(0, '/opt/acn-linux/bin')
 
-# Add acnpython33 so that we can import GetInput_*
-if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
-  sys.path.insert(0, '/opt/acn-linux/bin')
-
+# from acnpython33 import *
 
 try:
   from DocStruct import Setup
@@ -22,9 +22,6 @@ except ImportError:
   print("HINT: run `setup-aws-env.py`")
   print()
   sys.exit(0)
-
-from acnpython33 import *
-
 
 def GetPyConfiguration(c):
   return '''
@@ -46,64 +43,54 @@ AWS.KeyPrefix = "''' + c.keyprefix + '''"
 
   '''
 
+import argparse
+parser = argparse.ArgumentParser(description="Sets up a DocStruct environment.")
+# Parse the credentials file name
+parser.add_argument(
+  "credsfilename", metavar="credsfilename", type=str,
+  help="Path to the CSV file to use for credentials to access AWS"
+  )
+# Parse the environment name
+parser.add_argument(
+  "environment_id", metavar="environment_id", type=str,
+  help="Name of the environment within which we are going to setup an application"
+  )
+# Parse the application name
+parser.add_argument(
+  "application_id", metavar="application_id", type=str,
+  help="Name of the application to setup with the environment"
+  )
+# Parse the "force" boolean
+parser.add_argument(
+  "--force", action="store_true",
+  help="Tells the script to force update the application if it already exists."
+  )
+# Parse arguments
+args = parser.parse_args()
 
+# Assert that the credentials file actually exists
 try:
-  print("""
-This script will help you connect a local application with an already provisioned AWS environment.
+  assert os.path.exists(args.credsfilename)
+except AssertionError:
+  print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilename)
+  sys.exit(1)
 
-You will need to give the script admin credentials for your AWS account. These credentials
-are only required for the duration that the script is running. It may be easiest to create
-a temporary user using the Amazon AWS console. That user can be deleted after the script
-finishes setup. Remember to download credentials from AWS and provide the path to the file
-as an argument to the script.
+# Assert that an environment with the provided name actually exists
+try:
+  # Make sure the global environment exists
+  envconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
+  assert envconf
+except AssertionError:
+  print("Could not find environment named %s. Please make sure the environment exists before calling this script." % args.environment_id)
+  sys.exit(1)
+ 
+# Assert that an environment with the provided name actually exists
+# Check whether the environment already exists
+# We can check if the environment already exists
+appconf = Setup.GetLocalConfig(None, args.environment_id, args.application_id, args.credsfilename, globalconfig=envconf)
+if not appconf or not args.force:
+  appconf = Setup.MakeLocalEnvironment(args.credsfilename, args.environment_id, args.application_id, globalconfig=envconf)
 
-""")
-
-  if GetInput_YesNo('Do you want to continue (DEF)? ', Default='yes'):
-    print()
-    print()
-    credsfilename = GetInput_FilePath('Provide path to credentials file (DEF): ', Default='credentials.csv')
-    envname = GetInput_Regex('Please provide the name of the environment you would like to connect to (tmt-amstmt-0 for example)? ', Regex=r'[a-z0-9-]+')
-    # Make sure the global environment exists
-    globalconf = Setup.GetGlobalConfig(None, envname, credsfilename)
-    if not globalconf:
-        print()
-        print("Environment with name {0} is not setup yet. Please setup the environment and then run this script.".format(envname))
-        print()
-        sys.exit(0)
-    
-    keyprefix = GetInput_Regex('Please provide an application specific key prefix (tmtmanage for example)? ', Regex=r'[a-z0-9-]+')
-    
-    # We can check if the environment already exists
-    conf = Setup.GetLocalConfig(None, envname, keyprefix, credsfilename, globalconfig=globalconf)
-    if conf:
-      prompt = 'An app configuration with name "{1}" in environment "{0}" already exists. Would you like to reuse configuration from application (DEF)? '.format(envname, keyprefix)
-      if not GetInput_YesNo(prompt, Default='yes'):
-        print("Ok. Exiting. Please re-run this script with a different name for app key prefix")
-        print()
-        print()
-        sys.exit(0)
-    else:
-      conf = Setup.MakeLocalEnvironment(credsfilename, envname, keyprefix, globalconfig=globalconf)
-
-    print()
-    print()
-    print(GetPyConfiguration(conf))
-    print()
-
-  print()
-  print()
-
-except Exception as e:
-  print()
-  print()
-  print('*** Fatal Error ***')
-  raise
-except KeyboardInterrupt:
-  print()  
-  print()
-  print('*** User Abort ***')
-  raise
-finally:
-  print()
-
+print()
+print(GetPyConfiguration(appconf))
+print()

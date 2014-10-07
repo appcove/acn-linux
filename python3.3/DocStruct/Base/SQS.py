@@ -1,6 +1,7 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 import json
 
+from uuid import uuid4
 from urllib import parse
 from boto3.core.exceptions import ServerError
 
@@ -106,23 +107,27 @@ def AddPermissionForSNSTopic(session, topicarn, qurl):
     Queue = session.get_resource("sqs", "Queue")
     q = Queue(connection=sqsconn, queue_url=qurl)
     qarn = ConvertURLToArn(qurl)
+    # return q.add_permission(
+    #   queue_url=qurl,
+    #   label=uuid4().hex,
+    #   aws_account_ids=["*"],
+    #   actions=["SendMessage"],
+    #   )
     policy = json.dumps({
       "Version": "2014-09-24",
-      "Id": "{0}{1}".format(topicarn, qarn),
-      "Statement": [
-        {
-          "Sid": "AllowSNSToSendMessageToSQS",
-          "Effect": "Allow",
-          "Principal": {"AWS": "*"},
-          "Action": "SQS:SendMessage",
-          "Resource": qarn,
-          "Condition": {
-            "StringEquals": {
-              "aws:SourceArn": topicarn,
-            }
+      "Id": uuid4().hex,
+      "Statement": [{
+        "Sid": "AllowSNSToSendMessageToSQS",
+        "Effect": "Allow",
+        "Principal": {"AWS": "*"},
+        "Action": "SQS:SendMessage",
+        "Resource": qarn,
+        "Condition": {
+          "StringEquals": {
+            "aws:SourceArn": topicarn,
           }
         }
-      ]
+      }]
     })
-    return q.set_attributes(attributes={"Policy": policy})
-    # return q.set_attributes(attributes={"Policy": parse.quote_plus(policy, safe="*").replace("us-east-1", "us%2Deast%2D1")})
+    #return q.set_attributes(attributes={"Policy": policy})
+    return q.set_attributes(attributes={"Policy": parse.quote_plus(policy, safe="*").replace("us-east-1", "us%2Deast%2D1")})

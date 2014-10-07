@@ -6,6 +6,8 @@ import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/..
 
 import os
 import sys
+import json
+from base64 import b64encode
 
 # # Add acnpython33 so that we can import GetInput_*
 # if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
@@ -15,6 +17,7 @@ import sys
 
 try:
   from DocStruct import Setup
+  from DocStruct.Base import EC2
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
@@ -24,7 +27,7 @@ except ImportError:
   sys.exit(0)
 
 import argparse
-parser = argparse.ArgumentParser(description="Sets up a DocStruct environment.")
+parser = argparse.ArgumentParser(description="Terminate an instance running within a DocStruct environment.")
 # Parse the credentials file name
 parser.add_argument(
   "credsfilename", metavar="credsfilename", type=str,
@@ -33,13 +36,14 @@ parser.add_argument(
 # Parse the environment name
 parser.add_argument(
   "environment_id", metavar="environment_id", type=str,
-  help="Name of the environment within which we are going to launch the instance"
+  help="ID of the environment within which we want to terminate instance"
   )
-# Parse the "force" boolean
+# Parse the instance ID
 parser.add_argument(
-  "--force", action="store_true",
-  help="Tells the script to force update the environment if it already exists."
+  "instance_id", type=str,
+  help="ID of instance we would like to terminate"
   )
+
 # Parse arguments
 args = parser.parse_args()
 
@@ -51,12 +55,14 @@ except AssertionError:
   sys.exit(1)
 
 # Assert that an environment with the provided name actually exists
-# Check whether the environment already exists
-envconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
-if not envconf or not args.force:
-  envconf = Setup.MakeGlobalEnvironment(args.credsfilename, args.environment_id)
-
-if envconf:
-  print("Environment with name {0} has been setup.".format(args.environment_id))
-else:
-  raise Exception("Could not setup environment with name {0}".format(args.environment_id))
+try:
+  # Make sure the global environment exists
+  globalconf = Setup.GetGlobalConfig(None, args.environment_id, credsfilename)
+  assert globalconf
+except AssertionError:
+  print("Could not find environment named %s. Please make sure the environment exists before calling this script." % args.environment_id)
+  sys.exit(1)
+  
+# Supply this config to the LaunchInstance call
+session = Setup.GetSession(credsfilename=credsfilename)
+ret = EC2.TerminateInstance(session=session, instanceid=args.instance_id)
