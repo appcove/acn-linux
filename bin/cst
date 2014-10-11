@@ -253,6 +253,18 @@ if Errors:
     print()
   sys.exit(2)
 
+# Global validate is a function that can access everything as needed and validate values are good to go
+if 'GlobalValidate' in Locals:
+  try:
+    Locals['GlobalValidate'](RootInstance)
+  except Exception as e:
+    print()
+    print("\033[95m== There were errors from the GlobalValidate() function. ==================\033[0m")
+    print()
+    print(type(e))
+    print(e)
+    print()
+    sys.exit(2)
 
 
 # Execute global output

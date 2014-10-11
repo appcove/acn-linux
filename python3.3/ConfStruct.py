@@ -134,6 +134,52 @@ class Mapping(Vector, OrderedDict):
     # Because this is and object reference, just return current instance
     return self
   
+class Sequence(Vector, list):
+  '''
+  '''
+  Description = 'Sequence'
+  MinLength = 0
+ 
+  #def __repr__(self):
+  #  return "<{0}>".format(type(self).__name__)
+
+  def __new__(cls):
+    self = list.__new__(cls)
+    
+    if not hasattr(cls, 'Value'):
+      raise TypeError("Sequence classes must define an inner class called 'Value'")
+    
+    if not (inspect.isclass(cls.Value) and issubclass(cls.Value, BaseValue)):
+      raise TypeError("Inner class 'Value' must be a subclass of BaseValue")
+
+    return self
+
+  
+  @staticmethod
+  def Describe(cls, path):
+    
+    print('\033[93m{0}:\033[0m {1}\033[93m with value being\033[0m {2}'.format('.'.join(path), cls.Description, cls.Value.Description))
+    
+    mpath = path[0:-1] + (path[-1] + '[INDEX]',)
+    cls.Value.Describe(cls.Value, mpath)
+    
+    
+
+  @staticmethod
+  def Validate(cls, path, self, errors):
+    if not isinstance(self, cls):
+      raise TypeError("value must be of type {0}, not {1}".format(type(cls), type(self)))
+
+    if len(self) < self.MinLength:
+      raise ValueError('MinLength must be {0} instead of {1}'.format(self.MinLength, len(self)))
+
+    for key in range(len(self)):
+      mpath = path[0:-1] + (path[-1] + '[{0}]'.format(key),)
+      value = self[key]
+      self[key] = cls.Value.Validate(cls.Value, mpath, value, errors)
+      
+    # Because this is and object reference, just return current instance
+    return self
 
 
 
@@ -484,7 +530,7 @@ class Site(Object):
   class ServerName(String):
     pass
   class IP(IPAddress):
-  	pass
+    pass
   class Port(Port):
     Default=80
   class URL(String):
