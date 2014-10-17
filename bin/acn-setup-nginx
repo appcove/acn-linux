@@ -46,7 +46,7 @@ try:
        
         data = ReadSystemFile('etc/nginx/nginx.conf')
         data = data.replace('{SERVER_ERROR_LOG}', SERVER_ERROR_LOG)
-        data = data.replace('{SERVER_ACCESS_LOG}', SERVER_ERROR_LOG)
+        data = data.replace('{SERVER_ACCESS_LOG}', SERVER_ACCESS_LOG)
         WriteSystemFile('etc/nginx/nginx.conf', data)
         print('   ... done')
         print()
