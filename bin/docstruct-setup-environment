@@ -15,6 +15,8 @@ import sys
 
 try:
   from DocStruct import Setup
+  from DocStruct.Base import GetSession
+  from DocStruct.Config import EnvironmentConfig, ApplicationConfig
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
@@ -50,10 +52,13 @@ except AssertionError:
   print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilename)
   sys.exit(1)
 
+session = GetSession(credsfilename=args.credsfilename)
+
 # Assert that an environment with the provided name actually exists
 # Check whether the environment already exists
-envconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
-if not envconf or not args.force:
+envconf = EnvironmentConfig(Session=session, EnvironmentID=args.environment_id)
+inputbucket = envconf.S3_InputBucket
+if not inputbucket or not args.force:
   envconf = Setup.MakeGlobalEnvironment(args.credsfilename, args.environment_id)
 
 if envconf:
@@ -61,8 +66,8 @@ if envconf:
   print()
   print("*** NOTE ***")
   print("You will need to add a permission to the SQS queue to allow SNS topics to send messages to them")
-  print("SQS Queue URL: {0}".format(envconf.queueurl))
-  print("SNS Topic Arn: {0}".format(envconf.topicarn))
+  print("SQS Queue URL: {0}".format(envconf.SQS_QueueUrl))
+  print("SNS Topic Arn: {0}".format(envconf.ElasticTranscoder_TopicArn))
   print()
 else:
   raise Exception("Could not setup environment with name {0}".format(args.environment_id))

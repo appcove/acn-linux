@@ -15,6 +15,8 @@ import sys
 
 try:
   from DocStruct import Setup
+  from DocStruct.Base import GetSession
+  from DocStruct.Config import EnvironmentConfig, ApplicationConfig
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
@@ -30,16 +32,16 @@ def GetPyConfiguration(c):
 # COPY CODE BELOW AND PASTE INTO ~/.ConfStruct.py
 #######################################################################
 
-AWS.User.ARN = "''' + c.userarn + '''"
-AWS.User.Username = "''' + c.username + '''"
-AWS.User.AccessKeyId = "''' + c.accesskey + '''"
-AWS.User.SecretKey = "''' + c.secretkey  + '''"
+AWS.User.ARN = "''' + c.User_Arn + '''"
+AWS.User.Username = "''' + c.User_Username + '''"
+AWS.User.AccessKeyId = "''' + c.User_AccessKey + '''"
+AWS.User.SecretKey = "''' + c.User_SecretKey  + '''"
 
-AWS.SQS.QueueUrl = "''' + c.queueurl + '''"
+AWS.SQS.QueueUrl = "''' + c.EnvironmentConfig.SQS_QueueUrl + '''"
 
-AWS.InputBucket = "''' + c.inputbucketname + '''"
-AWS.OutputBucket = "''' + c.outputbucketname + '''"
-AWS.KeyPrefix = "''' + c.keyprefix + '''"
+AWS.InputBucket = "''' + c.EnvironmentConfig.S3_InputBucket + '''"
+AWS.OutputBucket = "''' + c.EnvironmentConfig.S3_OutputBucket + '''"
+AWS.KeyPrefix = "''' + c.ApplicationID + '''"
 
   '''
 
@@ -75,21 +77,19 @@ except AssertionError:
   print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilename)
   sys.exit(1)
 
-# Assert that an environment with the provided name actually exists
+session = GetSession(credsfilename=args.credsfilename)
+
+# Check if application and environment already exist
+appconf = ApplicationConfig(Session=session, EnvironmentID=args.environment_id, ApplicationID=args.application_id)
 try:
-  # Make sure the global environment exists
-  envconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename)
-  assert envconf
+  assert appconf.EnvironmentConfig.S3_InputBucket
 except AssertionError:
   print("Could not find environment named %s. Please make sure the environment exists before calling this script." % args.environment_id)
   sys.exit(1)
- 
-# Assert that an environment with the provided name actually exists
-# Check whether the environment already exists
-# We can check if the environment already exists
-appconf = Setup.GetLocalConfig(None, args.environment_id, args.application_id, args.credsfilename, globalconfig=envconf)
-if not appconf or not args.force:
-  appconf = Setup.MakeLocalEnvironment(args.credsfilename, args.environment_id, args.application_id, globalconfig=envconf)
+
+appuser = appconf.User_Arn
+if not appuser or not args.force:
+  appconf = Setup.MakeLocalEnvironment(args.credsfilename, args.environment_id, args.application_id, globalconfig=appconf.EnvironmentConfig)
 
 print()
 print(GetPyConfiguration(appconf))
