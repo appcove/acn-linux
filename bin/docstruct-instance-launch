@@ -14,7 +14,6 @@ except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
   print("Please make sure DocStruct.Setup is importable before running this script.")
-  print("HINT: run `setup-aws-env.py`")
   print()
   sys.exit(0)
 

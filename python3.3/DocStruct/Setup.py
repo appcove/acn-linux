@@ -100,7 +100,7 @@ def SetupEnvironment(*, CredsFilePath, EnvironmentID, WithDistribution=False):
     )
   usermeta = user.get()
   # Save the environment config so that when we start instances, we can pass the config to it as well
-  config = EnvironmentConfig(Session=session, EnvironmentID=EnvironmentID)
+  config = EnvironmentConfig(CredsFilePath=session, EnvironmentID=EnvironmentID)
   # Set the user credentials
   config.User_Arn = usermeta["User"]["Arn"]
   config.User_Username = credentials.user_name
@@ -127,7 +127,7 @@ def SetupApplication(*, CredsFilePath, EnvironmentID, ApplicationID, GlobalConfi
   session = GetSession(credsfilename=CredsFilePath)
   # If global config was not passed in, we can fetch it.
   if not GlobalConfig:
-    GlobalConfig = EnvironmentConfig(Session=session, EnvironmentID=EnvironmentID)
+    GlobalConfig = EnvironmentConfig(CredsFilePath=session, EnvironmentID=EnvironmentID)
     if not GlobalConfig.S3_InputBucket:
       raise Exception("Global environment with name {0} is not available".format(EnvironmentID))
   # Now we can create a user for this project with just the right permissions
@@ -140,7 +140,7 @@ def SetupApplication(*, CredsFilePath, EnvironmentID, ApplicationID, GlobalConfi
     )
   usermeta = user.get()
   # Save the application config
-  config = ApplicationConfig(Session=session, EnvironmentID=EnvironmentID, ApplicationID=ApplicationID)
+  config = ApplicationConfig(CredsFilePath=session, EnvironmentID=EnvironmentID, ApplicationID=ApplicationID)
   # Set the user credentials
   config.User_Arn = usermeta["User"]["Arn"]
   config.User_Username = credentials.user_name
