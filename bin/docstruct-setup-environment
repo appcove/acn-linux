@@ -2,39 +2,28 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 
 # Setup the path
-import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
-
-import os
-import sys
-
-# # Add acnpython33 so that we can import GetInput_*
-# if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
-#   sys.path.insert(0, '/opt/acn-linux/bin')
-
-# from acnpython33 import *
+import os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
 
 try:
   from DocStruct import Setup
-  from DocStruct.Base import GetSession
   from DocStruct.Config import EnvironmentConfig, ApplicationConfig
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
   print("Please make sure DocStruct.Setup is importable before running this script.")
-  print("HINT: run `setup-aws-env.py`")
   print()
-  sys.exit(0)
+  sys.exit(1)
 
 import argparse
 parser = argparse.ArgumentParser(description="Sets up a DocStruct environment.")
 # Parse the credentials file name
 parser.add_argument(
-  "credsfilename", metavar="credsfilename", type=str,
+  "credsfilepath", type=str,
   help="Path to the CSV file to use for credentials to access AWS"
   )
 # Parse the environment name
 parser.add_argument(
-  "environment_id", metavar="environment_id", type=str,
+  "environment_id", type=str,
   help="Name of the environment within which we are going to launch the instance"
   )
 # Parse the "force" boolean
@@ -47,19 +36,16 @@ args = parser.parse_args()
 
 # Assert that the credentials file actually exists
 try:
-  assert os.path.exists(args.credsfilename)
+  assert os.path.exists(args.credsfilepath)
 except AssertionError:
-  print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilename)
+  print("Could not find credential file at {0}. Please make sure the file actually exists before continuing...".format(args.credsfilepath))
   sys.exit(1)
 
-session = GetSession(credsfilename=args.credsfilename)
-
-# Assert that an environment with the provided name actually exists
-# Check whether the environment already exists
-envconf = EnvironmentConfig(Session=session, EnvironmentID=args.environment_id)
+# Check if an environment with the given name already exists
+envconf = EnvironmentConfig(CredsFilePath=args.credsfilepath, EnvironmentID=args.environment_id)
 inputbucket = envconf.S3_InputBucket
 if not inputbucket or not args.force:
-  envconf = Setup.MakeGlobalEnvironment(args.credsfilename, args.environment_id)
+  envconf = Setup.SetupEnvironment(CredsFilePath=args.credsfilepath, EnvironmentID=args.environment_id)
 
 if envconf:
   print("Environment with name {0} has been setup.".format(args.environment_id))

@@ -4,20 +4,13 @@
 # Setup the path
 import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
 
-import os
-import sys
 import json
 from base64 import b64encode
 
-# # Add acnpython33 so that we can import GetInput_*
-# if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
-#   sys.path.insert(0, '/opt/acn-linux/bin')
-
-# from acnpython33 import *
-
 try:
   from DocStruct import Setup
-  from DocStruct.Base import EC2
+  from DocStruct.Config import EnvironmentConfig
+  from DocStruct.Base import GetSession, EC2
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
@@ -28,9 +21,9 @@ except ImportError:
 
 import argparse
 parser = argparse.ArgumentParser(description="Get the status of instances running within a DocStruct environment.")
-# Parse the credentials file name
+# Parse the credentials file path
 parser.add_argument(
-  "credsfilename", type=str,
+  "credsfilepath", type=str,
   help="Path to the CSV file to use for credentials to access AWS"
   )
 # Parse the environment name
@@ -49,24 +42,47 @@ args = parser.parse_args()
 
 # Assert that the credentials file actually exists
 try:
-  assert os.path.exists(args.credsfilename)
+  assert os.path.exists(args.credsfilepath)
 except AssertionError:
-  print("Could not find credential file at {0}. Please make sure the file actually exists before continuing...".format(args.credsfilename))
+  print("Could not find credential file at {0}. Please make sure the file actually exists before continuing...".format(args.credsfilepath))
   sys.exit(1)
 
 # Assert that an environment with the provided name actually exists
 try:
   # Make sure the global environment exists
-  globalconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename, raw=True)
-  assert globalconf
+  envconf = EnvironmentConfig(CredsFilePath=args.credsfilepath, EnvironmentID=args.environment_id)
+  assert envconf.User_Arn
 except AssertionError:
   print("Could not find environment named {0}. Please make sure the environment exists before calling this script.".format(args.environment_id))
   sys.exit(1)
-  
-# Supply this config to the LaunchInstance call
-session = Setup.GetSession(credsfilename=args.credsfilename)
-instances = EC2.ListInstances(session=session, environmentid=args.environment_id)
 
-# Print out instance information
+# Supply this config to the LaunchInstance call
+instances = EC2.ListInstances(session=envconf.Session, environmentid=args.environment_id)
+
+groups = {}
+
+# Loop over the instances and group them using the EnvironmentID
 for instance in instances:
-  print("{0}".format(instance))
+  if 'Instances' in instance and len(instance['Instances']):
+    # Extract the actual instance information
+    i = instance['Instances'][0]
+    if len(i['Tags']) == 0:
+      if 'Untagged' not in groups:
+        groups['Untagged'] = []
+      # Untagged instances go into the untagged section
+      groups['Untagged'].append(i)
+      continue
+    # Loop over tags
+    for tag in i['Tags']:
+      if tag['Key'] == 'EnvironmentID':
+        if tag['Value'] not in groups:
+          groups[tag['Value']] = []
+        groups[tag['Value']].append(i)
+        break
+
+for environmentid, instances in groups.items():
+  print()
+  print("Instances belonging to {0}".format(environmentid))
+  for i in instances:
+    print("{0}: {1}".format(i['InstanceId'], i['State']['Name']))
+  print()

@@ -4,19 +4,12 @@
 # Setup the path
 import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
 
-import os
-import sys
 import json
 from base64 import b64encode
 
-# # Add acnpython33 so that we can import GetInput_*
-# if os.path.exists('/opt/acn-linux/bin/acnpython33.py'):
-#   sys.path.insert(0, '/opt/acn-linux/bin')
-
-# from acnpython33 import *
-
 try:
   from DocStruct import Setup
+  from DocStruct.Config import EnvironmentConfig
 except ImportError:
   print()
   print("Seems like your environment is not setup up correctly.")
@@ -29,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Launch an instance of the DocStruct jobs processor.")
 # Parse the credentials file name
 parser.add_argument(
-  "credsfilename", type=str,
+  "credsfilepath", type=str,
   help="Path to the CSV file to use for credentials to access AWS"
   )
 # Parse the environment name
@@ -53,24 +46,28 @@ args = parser.parse_args()
 
 # Assert that the credentials file actually exists
 try:
-  assert os.path.exists(args.credsfilename)
+  assert os.path.exists(args.credsfilepath)
 except AssertionError:
-  print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilename)
+  print("Could not find credential file at %s. Please make sure the file actually exists before continuing..." % args.credsfilepath)
   sys.exit(1)
 
 # Assert that an environment with the provided name actually exists
 try:
   # Make sure the global environment exists
-  globalconf = Setup.GetGlobalConfig(None, args.environment_id, args.credsfilename, raw=True)
-  assert globalconf
+  envconf = EnvironmentConfig(CredsFilePath=args.credsfilepath, EnvironmentID=args.environment_id)
+  assert envconf.User_Arn
 except AssertionError:
   print("Could not find environment named {0}. Please make sure the environment exists before calling this script.".format(args.environment_id))
   sys.exit(1)
-  
+
 # Supply this config to the LaunchInstance call
-session = Setup.GetSession(credsfilename=args.credsfilename)
-instances = Setup.LaunchInstances(Session=session, UserData=b64encode(globalconf).decode("utf-8"),
-                                  AMI=args.ami, NumInstances=args.num_instances)
+instances = Setup.LaunchInstances(
+  Session=envconf.Session,
+  UserData=b64encode(json.dumps(envconf.Data).encode('utf-8')).decode("utf-8"),
+  AMI=args.ami,
+  NumInstances=args.num_instances,
+  EnvironmentID=envconf.EnvironmentID,
+  )
 
 # Print out new instance information
 for instance in instances:

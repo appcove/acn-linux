@@ -5,7 +5,7 @@ def StartInstance(*, session, imageid, pemfilename, instancetype="t1.micro", use
 
     NOTE: when this function returns, the instance is still NOT fully started. We may need to
     wait a few minutes before we can access the instance via public IP.
-    
+
     :param session: Session to use for AWS access
     :type session: boto3.session.Session
     :param imageid: ID of the image to use for spawning instances
@@ -24,6 +24,22 @@ def StartInstance(*, session, imageid, pemfilename, instancetype="t1.micro", use
     return ret["Instances"][0]
 
 
+def TagInstances(*, session, instance_ids, tags):
+    """Tag instances
+
+    :param session: Session to use for AWS access
+    :type session: boto3.session.Session
+    :param instance_ids: List of instance IDs to tag
+    :type instance_ids: list
+    :param tags: The tags to create on the given resources
+    :type tags: list
+    :return: return value of create_tags method
+    :rtype: any
+    """
+    ec2conn = session.connect_to("ec2")
+    return ec2conn.create_tags(resources=instance_ids, tags=tags)
+
+
 def StopInstance(*, session, instanceid):
     """Stops an instance identified by instance id.
 
@@ -40,10 +56,22 @@ def StopInstance(*, session, instanceid):
 
 
 def ListInstances(*, session, environmentid, instanceid=None):
-    # TODO: look at ec2.describe_instances()
     ec2conn = session.connect_to("ec2")
     ret = ec2conn.describe_instances() or {}
-    return ret.get('Reservations', [{'Instances': []}])[0]['Instances']
+    if not ret:
+        return []
+    # Define a filter function
+    def filter_instance(inst):
+        if not len(inst['Instances']):
+            return False
+        if not len(inst['Instances'][0]['Tags']):
+            return True
+        for tag in inst['Instances'][0]['Tags']:
+            if tag['Key'] == 'EnvironmentID' and tag['Value'] == environmentid:
+                return True
+        return False
+    # Return
+    return filter(filter_instance, ret.get('Reservations', [{'Instances': []}]))
 
 
 def TerminateInstance(*, session, instanceid):
