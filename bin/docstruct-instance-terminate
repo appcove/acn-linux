@@ -2,7 +2,7 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 
 # Setup the path
-import time, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
+import os, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
 
 import json
 from base64 import b64encode
@@ -22,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Terminate an instance running within a DocStruct environment.")
 # Parse the credentials file name
 parser.add_argument(
-  "credsfilepath", type=str,
+  "credsfilepath", type=lambda s: os.path.abspath(os.path.join(os.getcwd(), s)),
   help="Path to the CSV file to use for credentials to access AWS"
   )
 # Parse the environment name
