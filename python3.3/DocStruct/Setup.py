@@ -42,7 +42,7 @@ def SetupEnvironment(*, CredsFilePath, EnvironmentID, WithDistribution=False):
   NOTE: this environment is for global usage.
   """
   # Get a session to use for AWS API access
-  session = GetSession(credsfilename=CredsFilePath)
+  session = GetSession(CredsFilePath=CredsFilePath)
   # Get bucket class
   inputbucket = S3.GetOrCreateBuckets(session, EnvironmentID)
   S3.SetBucketCorsPolicy(inputbucket)
@@ -124,7 +124,7 @@ def SetupEnvironment(*, CredsFilePath, EnvironmentID, WithDistribution=False):
 def SetupApplication(*, CredsFilePath, EnvironmentID, ApplicationID, GlobalConfig=None):
   """Sets up an application within an environment."""
   # Get a session to use for AWS API access
-  session = GetSession(credsfilename=CredsFilePath)
+  session = GetSession(CredsFilePath=CredsFilePath)
   # If global config was not passed in, we can fetch it.
   if not GlobalConfig:
     GlobalConfig = EnvironmentConfig(CredsFilePath=session, EnvironmentID=EnvironmentID)
@@ -148,3 +148,15 @@ def SetupApplication(*, CredsFilePath, EnvironmentID, ApplicationID, GlobalConfi
   config.User_SecretKey = credentials.secret_access_key
   # Now we can save the config file
   return config.Save()
+
+
+def KillEnvironment(*, CredsFilePath, EnvironmentID, GlobalConfig=None):
+  # TODO
+  pass
+
+
+def KillApplication(*, CredsFilePath, EnvironmentID, ApplicationID, GlobalConfig=None):
+  # TODO
+  # Delete the app specific user
+  # Move the folder with <app_id> prefix into <app_id>_uuid
+  pass

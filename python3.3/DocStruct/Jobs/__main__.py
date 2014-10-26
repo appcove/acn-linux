@@ -45,17 +45,27 @@ SECRET_KEY = CONFIG['User']['SecretKey']
 # TODO: Add a file to S3 denoting that this instance/process is ready.
 
 # Construct a logger for this process
-LOGGER = None
+import logging
+import logging.handlers
+# This should be part of configuration
+LOGLEVEL = logging.DEBUG
+# Setup the logger now
+LOGGER = logging.getLogger('DocStruct')
+LOGGER.setLevel(LOGLEVEL)
+
+# We need to construct a handler
 if len(sys.argv) > 1:
-  import logging
-  import logging.handlers
-  LOGGER = logging.getLogger('DocStruct')
-  LOGGER.setLevel(logging.DEBUG)
   lh = logging.handlers.TimedRotatingFileHandler(sys.argv[1], when='D', interval=1)
-  lh.setLevel(logging.DEBUG)
-  f = logging.Formatter('%(asctime)s, %(levelname)s, %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-  lh.setFormatter(f)
-  LOGGER.addHandler(lh)
+  lh.setLevel(LOGLEVEL)
+else:
+  # Create a logger that logs to stderr (default for StreamHandler)
+  lh = logging.StreamHandler()
+  lh.setLevel(LOGLEVEL)
+
+# Setup formatter
+f = logging.Formatter('%(asctime)s, %(levelname)s, %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+lh.setFormatter(f)
+LOGGER.addHandler(lh)
 
 # If we've reached here, it means all the config items we need to make this work are available
 from DocStruct.Base import GetSession, SQS
@@ -73,13 +83,12 @@ for modname in glob(os.path.join(os.path.dirname(__file__), "*.py")):
     import_module("DocStruct.Jobs.{0}".format(bn.replace('.py', '')))
 
 # Log a starting message
-if LOGGER:
-  LOGGER.debug("Starting process {0}".format(os.getpid()))
+LOGGER.debug("Starting process {0}".format(os.getpid()))
 
 # Start an infinite loop to start polling for messages
 while True:
   m = None
-  session = GetSession(access_key=ACCESS_KEY, secret_key=SECRET_KEY)
+  session = GetSession(AccessKey=ACCESS_KEY, SecretKey=SECRET_KEY)
   try:
     m, receipt_handle = SQS.GetMessageFromQueue(session, QUEUE_URL, delete_after_receive=True)
     ProcessMessage(Session=session, Message=m, Config=CONFIG, Logger=LOGGER)
@@ -100,5 +109,4 @@ while True:
     time.sleep(SLEEP_AMOUNT)
 
 # Log a message about stopping
-if LOGGER:
-  LOGGER.debug("Stopping process {0}".format(os.getpid()))
+LOGGER.debug("Stopping process {0}".format(os.getpid()))

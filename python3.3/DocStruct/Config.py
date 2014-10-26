@@ -11,7 +11,7 @@ class Config(object):
   _directprops = ('Session',)
 
   def __init__(self, *, CredsFilePath):
-    self.Session = GetSession(credsfilename=CredsFilePath) if isinstance(CredsFilePath, str) else CredsFilePath
+    self.Session = GetSession(CredsFilePath=CredsFilePath) if isinstance(CredsFilePath, str) else CredsFilePath
 
   @property
   def Data(self):
