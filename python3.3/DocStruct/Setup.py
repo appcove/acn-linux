@@ -50,14 +50,14 @@ def SetupEnvironment(*, CredsFilePath, EnvironmentID, WithDistribution=False):
   S3.SetupBucketForFlashAndSilverlight(session, inputbucket.bucket)
   # Create a CloudFront distribution for serving files from inputbucket
   if WithDistribution:
-    distresp = CloudFront.CreateDistributionForBucket(session, inputbucket.bucket)
+    distresp = CloudFront.CreateDistributionForBucket(Session=session, BucketName=inputbucket.bucket)
   # Create SQS queue for environment
   qurl = SQS.CreateQueue(session, EnvironmentID)
   # NOTE: since we only return the qurl, we need a way to convert the URL to an ARN
   # TODO: at some point we need to look at getting the ARN directly from the API
   qarn = SQS.ConvertURLToArn(qurl)
   # Create SNS topic so that the pipeline can publish notifications
-  topic = SNS.CreateTopic(session, EnvironmentID)
+  topic = SNS.CreateTopic(session=session, topicname=EnvironmentID)
   # Create a pipeline for transcoding videos
   policyname = "Transcoder-Policy-{0}".format(EnvironmentID)
   transcodername = "Transcoder-{0}".format(EnvironmentID)
@@ -71,24 +71,24 @@ def SetupEnvironment(*, CredsFilePath, EnvironmentID, WithDistribution=False):
   role_arn = roledict["Role"]["Arn"]
   # Create a pipeline to handle input from <inputbucket> and leave output in <inputbucket>
   pipeline = ElasticTranscoder.CreatePipeline(
-    session,
-    "{0}-Transcoding".format(EnvironmentID),
-    role_arn,
-    inputbucket.bucket,
-    inputbucket.bucket,
-    topic.topic_arn
+    session=session,
+    pipelinename="{0}-Transcoding".format(EnvironmentID),
+    role_arn=role_arn,
+    inputbucketname=inputbucket.bucket,
+    outputbucketname=inputbucket.bucket,
+    topic_arn=topic.topic_arn
     )
   pipelinedict = pipeline.get()
   pipeline_arn = pipelinedict["Pipeline"]["Arn"]
   # While we're at it, lets get the web preset and save it as in our config
-  web_presetarn = ElasticTranscoder.GetPresetWithName(session, "System preset: Web")
+  web_presetarn = ElasticTranscoder.GetPresetWithName(session=session, presetname="System preset: Web")
   # Create a preset to convert files to webm format
-  webm_presetarn = ElasticTranscoder.GetPresetWithName(session, "User preset: Webm")
+  webm_presetarn = ElasticTranscoder.GetPresetWithName(session=session, presetname="User preset: Webm")
   if not webm_presetarn:
-    webm_presetarn = ElasticTranscoder.CreatePreset(session, ElasticTranscoder.WEBM_PRESET_DATA)
+    webm_presetarn = ElasticTranscoder.CreatePreset(session=session, presetdata=ElasticTranscoder.WEBM_PRESET_DATA)
   # We can subscribe to the SNS topic using the SQS queue so that elastic transcoder
   # notifications are handled by the same jobs processing server
-  SNS.CreateSQSQueueSubscription(session, qarn, topic.topic_arn)
+  SNS.CreateSQSQueueSubscription(session=session, queuearn=qarn, topicarn=topic.topic_arn)
   # # We also need to add a permission for the queue so that SNS is able to send messages to this queue
   # SQS.AddPermissionForSNSTopic(session, topic.topic_arn, qurl)
   # Create a user that EC2 will use

@@ -39,7 +39,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Sets up a DocStruct environment.")
 # Parse the credentials file name
 parser.add_argument(
-  "credsfilepath", type=lambda s: os.path.abspath(os.path.join(os.getcwd(), s)),
+  "credsfilepath", type=lambda s: os.path.abspath(s),
   help="Path to the CSV file to use for credentials to access AWS"
   )
 # Parse the environment name
