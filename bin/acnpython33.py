@@ -65,6 +65,8 @@ elif exists('/etc/centos-release'):
   Config.OS.Name = 'centos'
 elif exists('/etc/redhat-release'):
   Config.OS.Name = 'redhat'
+elif exists('/etc/cloud'):
+  Config.OS.Name = 'amazonlinux'
 else:
   raise Exception("Cannot determine Config.OS.Name")
 

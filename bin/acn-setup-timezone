@@ -24,7 +24,10 @@ try:
         continue
       
       check_call(("sed", "--in-place", "-r", '{s/^ZONE=.*$/ZONE="'+tz.replace('/', r'\/')+'"/}', "/etc/sysconfig/clock"))
-      check_call(('/usr/sbin/tzdata-update'))      
+      if Config.OS.Name == 'amazonlinux':
+        check_call(("ln", "-sf", join("/usr/share/zoneinfo", tz), "/etc/localtime"))
+      else:
+        check_call(('/usr/sbin/tzdata-update'))      
 
       break
     pass#while
