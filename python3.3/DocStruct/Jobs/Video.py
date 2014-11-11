@@ -18,9 +18,9 @@ def TranscodeVideo(*, Session, InputKey, OutputKeyPrefix, OutputFormats, Config,
   PipelineId = basename(Config["ElasticTranscoder"]["PipelineArn"])
   # Trigger the transcoding
   ret = ElasticTranscoder.StartTranscoding(
-    Session,
-    PipelineId,
-    InputKey,
+    session=Session,
+    pipeline_id=PipelineId,
+    video_path=InputKey,
     output_key_prefix=OutputKeyPrefix,
     outputs=Outputs
     )

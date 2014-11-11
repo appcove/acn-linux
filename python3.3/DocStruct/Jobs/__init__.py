@@ -26,13 +26,13 @@ def JobWithName(jobname):
     return Inner
   return Job
 
-  
+
 Job = JobWithName('')
 
 
 def ProcessMessage(*, Session, Message, Config, Logger):
   """Process a message
-  
+
   :param Session: Session for AWS access
   :type Session: boto3.session.Session
   :param Message: JSON encoded job specification

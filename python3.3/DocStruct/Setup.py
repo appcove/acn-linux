@@ -8,10 +8,11 @@ from .Base import GetSession, S3, ElasticTranscoder, SNS, SQS, EC2, IAM, CloudFr
 from .Config import ApplicationConfig, EnvironmentConfig
 
 
-AC_AWSPEMFILENAME = "awstest"
+#AC_AWSPEMFILENAME = "awstest"
+AC_AWSPEMFILENAME = ""
 
 
-def LaunchInstances(*, Session, UserData, AMI, NumInstances=1, EnvironmentID=None):
+def LaunchInstances(*, Session, UserData, AMI, NumInstances=1, EnvironmentID=None, SSHKeyName=AC_AWSPEMFILENAME):
   """Launches <NumInstances> number of instances
 
   :param Session: Session to use for communication
@@ -24,10 +25,12 @@ def LaunchInstances(*, Session, UserData, AMI, NumInstances=1, EnvironmentID=Non
   :type NumInstances: int
   :param EnvironmentID: Name of the environment to which this instance belongs
   :type EnvironmentID: str
+  :param SSHKeyName: Name of Key that will be used to SSH into EC2 instance
+  :type SSHKeyName: str
   :return: The IDs of the instances started
   :rtype: list
   """
-  ret = [EC2.StartInstance(session=Session, imageid=AMI, pemfilename=AC_AWSPEMFILENAME, userdata=UserData) for i in range(NumInstances)]
+  ret = [EC2.StartInstance(session=Session, imageid=AMI, pemfilename=SSHKeyName, userdata=UserData) for i in range(NumInstances)]
   instance_ids = [i['InstanceId'] for i in ret]
   EC2.TagInstances(session=Session, instance_ids=instance_ids, tags=[
     {'Key': 'EnvironmentID', 'Value': EnvironmentID},

@@ -1,6 +1,9 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
+import os
+from uuid import uuid4
 
-def StartInstance(*, session, imageid, pemfilename, instancetype="t1.micro", userdata=""):
+
+def StartInstance(*, session, imageid, pemfilename="", instancetype="t1.micro", userdata=""):
   """Starts an instance of specified imageid
 
   NOTE: when this function returns, the instance is still NOT fully started. We may need to
@@ -20,6 +23,12 @@ def StartInstance(*, session, imageid, pemfilename, instancetype="t1.micro", use
   :rtype: str
   """
   ec2conn = session.connect_to("ec2")
+  if not pemfilename:
+    key_pair = ec2conn.create_key_pair(key_name=uuid4().hex)
+    pemfilename = "{0}/{1}.pem".format(os.environ.get('HOME', '/tmp'), key_pair['KeyName'])
+    with open(pemfilename, "a") as fp:
+      fp.write(key_pair['KeyMaterial'])
+    print("Wrote SSH key to {0}".format(pemfilename))
   ret = ec2conn.run_instances(image_id=imageid, min_count=1, max_count=1, keyname=pemfilename, instance_type=instancetype, user_data=userdata)
   return ret["Instances"][0]
 

@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+# Setup the path
+import os, os.path, sys; sys.path.insert(1, os.path.abspath(sys.path[0] + "/../Python"))
+import json
+import argparse
+import logging
+import logging.handlers
+
+from botocore.vendored import requests
+
+try:
+  from DocStruct.Jobs import Processor
+except ImportError:
+  print()
+  print("Seems like your environment is not setup up correctly.")
+  print("Please make sure DocStruct.Jobs is importable before running this script.")
+  print()
+  sys.exit(1)
+
+parser = argparse.ArgumentParser(description="Starts an instance of the DocStruct jobs processing server")
+# Parse the config file path if provided
+parser.add_argument(
+  "--config", dest="configfilepath", type=lambda s: os.path.abspath(s) if s and not s.startswith('http') else s, nargs='?', default="",
+  help="Path to the config file. In an EC2 instance, this option is not required since config is provided in instance data. It is required in all other cases."
+  )
+parser.add_argument(
+  "--logfile", dest="logfilepath", type=lambda s: os.path.abspath(s) if s else "", nargs="?", default="",
+  help="Path to the file where output from process should be logged."
+  )
+# Parse arguments
+args = parser.parse_args()
+
+# Construct a logger for this process
+LOGLEVEL = logging.DEBUG
+# Setup the logger now
+LOGGER = logging.getLogger('DocStruct')
+LOGGER.setLevel(LOGLEVEL)
+# We need to construct a handler
+if args.logfilepath:
+  lh = logging.handlers.TimedRotatingFileHandler(args.logfilepath, when='D', interval=1)
+  lh.setLevel(LOGLEVEL)
+else:
+  # Create a logger that logs to stderr (default for StreamHandler)
+  lh = logging.StreamHandler()
+  lh.setLevel(LOGLEVEL)
+# Setup log formatter
+f = logging.Formatter('%(asctime)s, %(levelname)s, %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+lh.setFormatter(f)
+LOGGER.addHandler(lh)
+
+# Get config
+if args.configfilepath:
+  if args.configfilepath.startswith('http'):
+    output = requests.get(args.configfilepath)
+    Config = json.loads(output.content)
+  else:
+    try:
+      assert os.path.exists(args.configfilepath)
+    except AssertionError:
+      LOGGER.exception("Could not find config file at {0}. Exiting...".format(args.configfilepath))
+      sys.exit(1)
+    else:
+      with open(args.configfilepath, 'r') as fp:
+        Config = json.loads(fp.read())
+else:
+  Config = json.loads(base64.b64decode(urllib.request.urlopen("http://169.254.169.254/latest/user-data").read()).decode('utf-8'))
+
+# Setup and run the processor
+Processor.Run(Config=Config, Logger=LOGGER)
