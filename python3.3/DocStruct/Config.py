@@ -105,3 +105,15 @@ class ApplicationConfig(EnvironmentConfig):
 
   def _get_bucket_name(self):
     return self.EnvironmentID
+
+
+class ReadOnlyConfig(Config):
+  """Implements a read only config"""
+  
+  def __init__(self, *, Data):
+    session = GetSession(AccessKey=Data['User']['AccessKey'], SecretKey=Data['User']['SecretKey'])
+    super().__init__(CredsFilePath=session)
+    object.__setattr__(self, '__Data', Data)
+
+  def Save(self):
+    raise Exception("Cannot save this read-only config")

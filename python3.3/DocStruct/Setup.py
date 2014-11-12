@@ -8,33 +8,38 @@ from .Base import GetSession, S3, ElasticTranscoder, SNS, SQS, EC2, IAM, CloudFr
 from .Config import ApplicationConfig, EnvironmentConfig
 
 
-#AC_AWSPEMFILENAME = "awstest"
-AC_AWSPEMFILENAME = ""
-
-
-def LaunchInstances(*, Session, UserData, AMI, NumInstances=1, EnvironmentID=None, SSHKeyName=AC_AWSPEMFILENAME):
+def LaunchInstances(*, AMI, EnvironmentConfig, NumInstances=1):
   """Launches <NumInstances> number of instances
 
-  :param Session: Session to use for communication
-  :type Session: boto3.session.Session
-  :param UserData: User data to pass to the instance
-  :type UserData: str
   :param AMI: The AMI to use for launching instances
   :type AMI: str
+  :param EnvironmentConfig: Configuration for the environment these instances are to be launced in
+  :type EnvironmentConfig: DocStruct.Config.EnvironmentConfig
   :param NumInstances: Number of instances to start
   :type NumInstances: int
-  :param EnvironmentID: Name of the environment to which this instance belongs
-  :type EnvironmentID: str
-  :param SSHKeyName: Name of Key that will be used to SSH into EC2 instance
-  :type SSHKeyName: str
   :return: The IDs of the instances started
   :rtype: list
   """
-  ret = [EC2.StartInstance(session=Session, imageid=AMI, pemfilename=SSHKeyName, userdata=UserData) for i in range(NumInstances)]
+  envid = EnvironmentConfig.EnvironmentID
+  # Build the PEM file if it does not exist yet
+  keyname = EnvironmentConfig.EC2_KeyName
+  if not keyname:
+    key = EC2.CreateKey(session=EnvironmentConfig.Session, name=envid)
+    EnvironmentConfig.EC2_KeyName = key['KeyName']
+    EnvironmentConfig.EC2_KeyMaterial = key['KeyMaterial']
+    EnvironmentConfig.Save()
+  # Prepare data to be passed to instances
+  userdata = b64encode(json.dumps({
+    "EnvironmentID": envid,
+    "AccessKey": EnvironmentConfig.User_AccessKey,
+    "SecretKey": EnvironmentConfig.User_SecretKey,
+    }).encode('utf-8')).decode('utf-8')
+  # Launch
+  ret = [EC2.StartInstance(session=envconf.Session, imageid=AMI, pemfilename=keyname, userdata=userdata) for i in range(NumInstances)]
   instance_ids = [i['InstanceId'] for i in ret]
   EC2.TagInstances(session=Session, instance_ids=instance_ids, tags=[
-    {'Key': 'EnvironmentID', 'Value': EnvironmentID},
-    {'Key': 'Name', 'Value': EnvironmentID},
+    {'Key': 'EnvironmentID', 'Value': envid},
+    {'Key': 'Name', 'Value': envid},
     ])
   return ret
 

@@ -61,11 +61,9 @@ except AssertionError:
 
 # Supply this config to the LaunchInstance call
 instances = Setup.LaunchInstances(
-  Session=envconf.Session,
-  UserData=b64encode(json.dumps(envconf.Data).encode('utf-8')).decode("utf-8"),
   AMI=args.ami,
+  EnvironmentConfig=envconf,
   NumInstances=args.num_instances,
-  EnvironmentID=envconf.EnvironmentID,
   )
 
 # Print out new instance information
