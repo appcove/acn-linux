@@ -11,9 +11,9 @@ def TranscodeVideo(*, InputKey, OutputKeyPrefix, OutputFormats, Config, Logger):
   Outputs = []
   for o in OutputFormats:
     if o == 'webm':
-      Outputs.append({'Key': 'webm.webm', 'PresetId': basename(Config.ElasticTranscoder_WebPresetArn)})
+      Outputs.append({'Key': 'video.webm', 'PresetId': basename(Config.ElasticTranscoder_WebmPresetArn)})
     elif o == 'mp4':
-      Outputs.append({'Key': 'web.mp4', 'PresetId': basename(Config.ElasticTranscoder_WebmPresetArn)})
+      Outputs.append({'Key': 'video.mp4', 'PresetId': basename(Config.ElasticTranscoder_WebPresetArn)})
   # Set Pipeline ID
   PipelineId = basename(Config.ElasticTranscoder_PipelineArn)
   # Trigger the transcoding
