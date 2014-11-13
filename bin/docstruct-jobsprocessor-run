@@ -41,6 +41,7 @@ LOGLEVEL = logging.DEBUG
 # Setup the logger now
 LOGGER = logging.getLogger('DocStruct')
 LOGGER.setLevel(LOGLEVEL)
+
 # We need to construct a handler
 if args.logfilepath:
   lh = logging.handlers.TimedRotatingFileHandler(args.logfilepath, when='D', interval=1)

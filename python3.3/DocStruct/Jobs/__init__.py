@@ -103,10 +103,12 @@ def Run(*, Config, Logger, SleepAmount=20):
 
   # Start an infinite loop to start polling for messages
   while True:
+    Logger.debug('Listening to SQS')
     m = None
     session = Config.Session
     try:
       m, receipt_handle = SQS.GetMessageFromQueue(session, QueueUrl, delete_after_receive=True)
+      Logger.debug("Message recieved {0}".format(str(m)))
       ProcessMessage(Message=m, Config=Config, Logger=Logger)
     except NoMoreRetriesException:
       pass
