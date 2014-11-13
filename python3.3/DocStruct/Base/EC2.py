@@ -15,14 +15,9 @@ def CreateKey(*, session, name):
   """
   ec2conn = session.connect_to("ec2")
   return ec2conn.create_key_pair(key_name=name)
-  #pemfilename = "{0}/{1}.pem".format(os.environ.get('HOME', '/tmp'), key_pair['KeyName'])
-  #with open(pemfilename, "a") as fp:
-  #  fp.write(key_pair['KeyMaterial'])
-  #print("Wrote SSH key to {0}".format(pemfilename))
 
 
-
-def StartInstance(*, session, imageid, pemfilename="", instancetype="t1.micro", userdata=""):
+def StartInstance(*, session, imageid, keyname="", instancetype="t2.micro", userdata=""):
   """Starts an instance of specified imageid
 
   NOTE: when this function returns, the instance is still NOT fully started. We may need to
@@ -32,8 +27,8 @@ def StartInstance(*, session, imageid, pemfilename="", instancetype="t1.micro", 
   :type session: boto3.session.Session
   :param imageid: ID of the image to use for spawning instances
   :type imageid: str
-  :param pemfilename: Name of the AWS access key that will be used to SSH into the instances
-  :type pemfilename: str
+  :param keyname: Name of the AWS access key that will be used to SSH into the instances
+  :type keyname: str
   :param instancetype: Type of instance to start
   :type instancetype: str
   :param userdata: User data to send to the instance
@@ -42,7 +37,7 @@ def StartInstance(*, session, imageid, pemfilename="", instancetype="t1.micro", 
   :rtype: str
   """
   ec2conn = session.connect_to("ec2")
-  ret = ec2conn.run_instances(image_id=imageid, min_count=1, max_count=1, keyname=pemfilename, instance_type=instancetype, user_data=userdata)
+  ret = ec2conn.run_instances(image_id=imageid, min_count=1, max_count=1, key_name=keyname, instance_type=instancetype, user_data=userdata)
   return ret["Instances"][0]
 
 
@@ -82,16 +77,18 @@ def ListInstances(*, session, environmentid, instanceid=None):
   ret = ec2conn.describe_instances() or {}
   if not ret:
     return []
+
   # Define a filter function
   def filter_instance(inst):
     if not len(inst['Instances']):
       return False
-    if not len(inst['Instances'][0]['Tags']):
+    if not len(inst['Instances'][0].get('Tags', [])):
       return True
     for tag in inst['Instances'][0]['Tags']:
       if tag['Key'] == 'EnvironmentID' and tag['Value'] == environmentid:
         return True
     return False
+
   # Return
   return filter(filter_instance, ret.get('Reservations', [{'Instances': []}]))
 

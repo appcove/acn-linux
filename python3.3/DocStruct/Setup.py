@@ -28,16 +28,18 @@ def LaunchInstances(*, AMI, EnvironmentConfig, NumInstances=1):
     EnvironmentConfig.EC2_KeyName = key['KeyName']
     EnvironmentConfig.EC2_KeyMaterial = key['KeyMaterial']
     EnvironmentConfig.Save()
+
   # Prepare data to be passed to instances
   userdata = b64encode(json.dumps({
     "EnvironmentID": envid,
     "AccessKey": EnvironmentConfig.User_AccessKey,
     "SecretKey": EnvironmentConfig.User_SecretKey,
     }).encode('utf-8')).decode('utf-8')
+
   # Launch
-  ret = [EC2.StartInstance(session=envconf.Session, imageid=AMI, pemfilename=keyname, userdata=userdata) for i in range(NumInstances)]
+  ret = [EC2.StartInstance(session=EnvironmentConfig.Session, imageid=AMI, keyname=keyname, userdata=userdata) for i in range(NumInstances)]
   instance_ids = [i['InstanceId'] for i in ret]
-  EC2.TagInstances(session=Session, instance_ids=instance_ids, tags=[
+  EC2.TagInstances(session=EnvironmentConfig.Session, instance_ids=instance_ids, tags=[
     {'Key': 'EnvironmentID', 'Value': envid},
     {'Key': 'Name', 'Value': envid},
     ])

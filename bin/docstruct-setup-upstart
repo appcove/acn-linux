@@ -49,7 +49,7 @@ for i in range(1, args.num_processes):
   fname = "/etc/init/docstruct{0}.conf".format(i)
   # Write the component configs
   with open(fname, "w") as fp:
-    fp.write(TEMPLATE.format("docstruct", "docstruct", str(i)))
+    fp.write(TEMPLATE.format("starting docstruct", "stopping docstruct", str(i)))
     fp.write("\n")
   # Output filename
   print("Wrote {0}".format(fname))
@@ -67,8 +67,11 @@ if args.norestart:
 else:
   print()
   # NOTE: we do not call restart since restart does not reload the conf files
-  print("Stopping docstruct processes")
-  subprocess.check_call(("initctl", "stop", "docstruct"))
+  try:
+    print("Stopping docstruct processes")
+    subprocess.check_call(("initctl", "stop", "docstruct"))
+  except subprocess.CalledProcessError:
+    pass
   print("Starting docstruct processes")
   subprocess.check_call(("initctl", "start", "docstruct"))
   print()

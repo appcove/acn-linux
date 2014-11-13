@@ -65,7 +65,7 @@ for instance in instances:
   if 'Instances' in instance and len(instance['Instances']):
     # Extract the actual instance information
     i = instance['Instances'][0]
-    if len(i['Tags']) == 0:
+    if len(i.get('Tags', [])) == 0:
       if 'Untagged' not in groups:
         groups['Untagged'] = []
       # Untagged instances go into the untagged section
