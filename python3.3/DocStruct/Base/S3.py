@@ -50,7 +50,7 @@ XML_MAP = {
 }
 
 
-def GetBucketAndKeyFromArn(self, Arn):
+def GetBucketAndKeyFromArn(Arn):
   pth = Arn.split(":")[-1]
   splits = pth.split("/")
   bucket = splits[0]
