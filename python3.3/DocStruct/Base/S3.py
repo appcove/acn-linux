@@ -307,7 +307,7 @@ def GetJSON(*, session, bucket, key):
   """
   obj = GetObject(session=session, bucket=bucket, key=key)
   if not obj:
-    return {"Status": "Progressing"}
+    return None
   return json.loads(obj.decode('utf-8'))
 
 
