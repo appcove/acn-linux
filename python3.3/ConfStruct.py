@@ -3,7 +3,7 @@
 from decimal import Decimal
 import re
 import inspect
-from os.path import join, isfile, isdir
+from os.path import join, isfile, isdir, dirname
 from collections import OrderedDict
 
 ###############################################################################
@@ -410,12 +410,19 @@ class String(Scalar):
 
 class File(String):
   MustExist = True
+  DirectoryMustExist = False
   @staticmethod
   def Validate(cls, path, value, errors):
     value = String.Validate(cls, path, value, errors)
     if cls.MustExist and not isfile(value):
-      raise ValueError("Directory '{0}' does not exist".format(value))
+      raise ValueError("File '{0}' does not exist".format(value))
+    if cls.DirectoryMustExist and not isdir(dirname(value)):
+      raise ValueError("Directory '{0}' does not exist".format(dirname(value)))
     return value
+
+class LogFile(File):
+  MustExist = False
+  DirectoryMustExist = True
 
 class Directory(String):
   Exists = True
