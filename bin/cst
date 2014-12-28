@@ -51,14 +51,6 @@ parser.add_argument(
   default='.', 
   help='Path to the project you wish to configure.')
 
-parser.add_argument(
-  '--cleanup', 
-  dest='Cleanup', 
-  action='store_const',
-  const=True,
-  default=False, 
-  help='Delete all extra files in ConfStruct directroy.')
-
 
 args = parser.parse_args()
 
@@ -89,19 +81,6 @@ print("\033[1m{0}\033[0m".format(ProjectPath))
 print()
 
 ConfStructPath  = join(ProjectPath, 'ConfStruct')
-
-###############################################################################
-if args.Cleanup:
-  print()
-  print("\033[95m== Cleanup =======================================================================\033[0m")
-  for f in os.listdir(ConfStructPath):
-    if f not in ('Global.py', 'Local.py', '.gitignore', '.gitattributes'):
-      p = join(ConfStructPath, f)
-      if isfile(p):
-        print('\033[93m' + 'Remove' + '\033[0m' + ' ' + p)
-        os.remove(join(ConfStructPath, f))
-  print()
-  sys.exit()
 
 ###############################################################################
 def WriteFile(name, contents):
@@ -265,6 +244,20 @@ if 'GlobalValidate' in Locals:
     print(e)
     print()
     sys.exit(2)
+
+
+
+###############################################################################
+if True:
+  print()
+  print("\033[95m== Cleanup =======================================================================\033[0m")
+  for f in os.listdir(ConfStructPath):
+    if f not in ('Global.py', 'Local.py', '.gitignore', '.gitattributes'):
+      p = join(ConfStructPath, f)
+      if isfile(p):
+        print('\033[93m' + 'Remove' + '\033[0m' + ' ' + p)
+        os.remove(join(ConfStructPath, f))
+  print()
 
 
 # Execute global output
