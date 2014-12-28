@@ -4,7 +4,7 @@
 import argparse
 import sys
 import os
-from os.path import isfile, join, abspath, exists, dirname, expanduser
+from os.path import isfile, join, abspath, exists, dirname, basename, expanduser
 import inspect
 import textwrap
 from itertools import chain, repeat
@@ -83,7 +83,7 @@ print()
 ConfStructPath  = join(ProjectPath, 'ConfStruct')
 
 ###############################################################################
-def WriteFile(name, contents):
+def WriteFile(name, contents, linktype=None):
   if '/' in name:
     raise ValueError('WriteFile only accepts file names, not paths')
 
@@ -92,6 +92,23 @@ def WriteFile(name, contents):
   with open(p, 'w') as f:
     f.write(contents)
     print("{0} characters written to {1}".format(len(contents), p))
+    
+    if linktype == 'nginx':
+      print("\033[1msudo ln -s {0} {1}\033[0m".format(p, join('/etc/nginx/conf.server.d', basename(p)))) 
+      print()
+    
+    elif linktype == 'httpd':
+      print("\033[1msudo ln -s {0} {1}\033[0m".format(p, join('/etc/httpd/conf.virtualhost.d', basename(p)))) 
+      print()
+    
+    elif linktype is None:
+      print()
+
+    else:
+      raise ValueError('Invalid 3rd argument to WriteFile of "{0}"'.format(linktype))
+
+    
+    
     
 
 ###############################################################################
