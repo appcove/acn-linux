@@ -95,10 +95,14 @@ def WriteFile(name, contents, linktype=None):
     
     if linktype == 'nginx':
       print("\033[1msudo ln -s {0} {1}\033[0m".format(p, join('/etc/nginx/conf.server.d', basename(p)))) 
+      print("\033[1msudo /sbin/service nginx configtest\033[0m") 
+      print("\033[1msudo /sbin/service nginx restart\033[0m") 
       print()
     
     elif linktype == 'httpd':
       print("\033[1msudo ln -s {0} {1}\033[0m".format(p, join('/etc/httpd/conf.virtualhost.d', basename(p)))) 
+      print("\033[1msudo /sbin/service httpd configtest\033[0m") 
+      print("\033[1msudo /sbin/service httpd restart\033[0m") 
       print()
     
     elif linktype is None:
