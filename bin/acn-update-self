@@ -9,18 +9,11 @@ try:
   print()
   os.chdir(Path) #Important for git commands
 
-  if open('.git/HEAD', 'r').read().strip() != 'ref: refs/heads/master':
-    print()
-    print('GIT IS NOT ON master')
-    print()
-    call(('git', 'status'))
-    call(('git', 'branch'))
-    print
-    sys.exit()
-
+  
+  call(('git', 'fetch'))
     
-  if GetInput_YesNo('Do you want to update "{0}" to the latest? (DEF)? '.format(Path), Default='yes'):
-    check_call(('git', 'pull'))
+  if GetInput_YesNo('Do you want to rebase "{0}" to the latest master? (DEF)? '.format(Path), Default='yes'):
+    check_call(('git', 'rebase', 'origin/master'))
 
 
 except Exception as e:
