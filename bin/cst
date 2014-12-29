@@ -112,8 +112,49 @@ def WriteFile(name, contents, linktype=None):
       raise ValueError('Invalid 3rd argument to WriteFile of "{0}"'.format(linktype))
 
     
+###############################################################################
+class LiveDevDomain():
+  '''
+  This class is used to convert domains from a live version to a development version and back again.
+  It also provides code in PHP and Python so that the functions can be written to a local include file.
+
+  Usage:
+    DomainConverter = LiveDevDomain(suffix='--you.your.server.com')
+    ...
+    MainSite.ServerName = DomainConverter.LiveToDev('main.site.com')
+
+  '''
+  def __init__(self, *, 
+    suffix, 
+    dotreplacement='--', 
+    LiveToDev_Python_Name='LiveToDev', 
+    DevToLive_Python_Name='DevToLive', 
+    LiveToDev_PHP_Name='LiveToDev', 
+    DevToLive_PHP_Name='DevToLive'
+    ):
+
+    if suffix is None:
+      self.LiveToDev = lambda x: x
+      self.DevToLive = lambda x: x
+      
+      self.LiveToDev_Python_Code = LiveToDev_Python_Name + ''' = lambda x: x'''
+      self.DevToLive_Python_Code = DevToLive_Python_Name + ''' = lambda x: x'''
     
+      self.LiveToDev_PHP_Code = '''function ''' + LiveToDev_PHP_Name + '''($host) { return $host; }'''
+      self.LiveToDev_PHP_Code = '''function ''' + DevToLive_PHP_Name + '''($host) { return $host; }'''
+
+    else:
+      self.LiveToDev = lambda x: x.replace('.', dotreplacement) + suffix
+      self.DevToLive = lambda x: x.replace(suffix, '').replace(dotreplacement, '.')
     
+      self.LiveToDev_Python_Code = LiveToDev_Python_Name + ''' = lambda x: x.replace('.', ''' + repr(dotreplacement) + ''') + ''' + repr(suffix)
+      self.DevToLive_Python_Code = DevToLive_Python_Name + ''' = lambda x: x.replace(''' + repr(suffix) + ''', '').replace(''' + repr(dotreplacement) + ''', '.')'''
+    
+      self.LiveToDev_PHP_Code = '''function ''' + LiveToDev_PHP_Name + '''($host) { return str_replace('.', ''' + repr(dotreplacement) + ''', $host) . ''' + repr(suffix) + '''; }'''
+      self.DevToLive_PHP_Code = '''function ''' + DevToLive_PHP_Name + '''($host) { return str_replace(''' + repr(dotreplacement) + ''', '.', str_replace(''' + repr(suffix) + ''', '', $host)); }'''
+
+  def WildcardToRegex(self, s):
+    return ('~^' + s.replace('.', r'\.') + '$').replace('*', '[a-z0-9-]+')
 
 ###############################################################################
 
@@ -190,6 +231,7 @@ Globals = dict(
   User                = User,
   WriteFile           = WriteFile,
   join                = join,
+  LiveDevDomain       = LiveDevDomain,
   )
 
 
