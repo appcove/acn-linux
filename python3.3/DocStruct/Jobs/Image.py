@@ -21,7 +21,7 @@ def DownloadImageFromS3(Config, SourceKey):
   return fpath
 
 
-def ProcessImage(*, Output, Command, SourceKey, JobName, Config, Logger):
+def ProcessImage(*, Output, Command, SourceKey, OutputKeyPrefix, JobName, Config, Logger):
   Logger.debug("{0} job for {1} started".format(JobName, SourceKey))
   subprocess.check_output(Command, stderr=subprocess.STDOUT)
   Logger.debug("{0} job for {1} completed".format(JobName, SourceKey))
@@ -29,15 +29,16 @@ def ProcessImage(*, Output, Command, SourceKey, JobName, Config, Logger):
   Logger.debug("Starting Upload of {0} to S3".format(Output.OutputKey))
   o_fpath = Command[-1]
   o_type = mimetypes.guess_type(o_fpath)[0]
+  o_key = os.path.join(OutputKeyPrefix, Output.OutputKey)
   with open(o_fpath, 'rb') as fp:
-    S3.PutObject(session=Config.Session, bucket=Config.S3_OutputBucket, key=Output.OutputKey, content=fp, type_=o_type)
+    S3.PutObject(session=Config.Session, bucket=Config.S3_OutputBucket, key=o_key, content=fp, type_=o_type)
   Logger.debug("Finished Upload of {0} to S3".format(Output.OutputKey))
   # Delete the temporary output file
   os.remove(o_fpath)
 
 
 @Job
-def ResizeImage(*, SourceKey, Outputs, Config, Logger):
+def ResizeImage(*, SourceKey, OutputKeyPrefix, Outputs, Config, Logger):
   Logger.debug("ResizeImage job for {0} started".format(SourceKey))
   # Download the required file and save it to a temp location
   FilePath = DownloadImageFromS3(Config, SourceKey)
@@ -48,16 +49,16 @@ def ResizeImage(*, SourceKey, Outputs, Config, Logger):
       BIN_CONVERT,
       FilePath,
       '-resize', '{0}x{1}'.format(str(o.Width), str(o.Height)),
-      os.path.join('/tmp', o.OutputKey.replace('/', '--')),
+      os.path.join('/tmp', '{0}{1}'.format(OutputKeyPrefix.replace('/', '--'), o.OutputKey)),
       )
     # Now we can actually run the command
-    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, JobName='ResizeImage', Config=Config, Logger=Logger)
+    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, OutputKeyPrefix=OutputKeyPrefix, JobName='ResizeImage', Config=Config, Logger=Logger)
   # We're done with the temp file, delete it
   os.remove(FilePath)
 
 
 @Job
-def NormalizeImage(*, SourceKey, Outputs, Config, Logger):
+def NormalizeImage(*, SourceKey, OutputKeyPrefix, Outputs, Config, Logger):
   Logger.debug("NormalizeImage job for {0} started".format(SourceKey))
   # Download the required file and save it to a temp location
   FilePath = DownloadImageFromS3(Config, SourceKey)
@@ -70,9 +71,9 @@ def NormalizeImage(*, SourceKey, Outputs, Config, Logger):
       '-resize', '{0}x{1}^'.format(str(o.Width), str(o.Height)),
       '-gravity', 'Center',
       '-extent', '{0}x{1}'.format(str(o.Width), str(o.Height)),
-      os.path.join('/tmp', o.OutputKey.replace('/', '--')),
+      os.path.join('/tmp', '{0}{1}'.format(OutputKeyPrefix.replace('/', '--'), o.OutputKey)),
       )
     # Now we can actually run the command
-    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, JobName='NormalizeImage', Config=Config, Logger=Logger)
+    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, OutputKeyPrefix=OutputKeyPrefix, JobName='NormalizeImage', Config=Config, Logger=Logger)
   # We're done with the temp file, delete it
   os.remove(FilePath)
