@@ -4,11 +4,13 @@ import json
 import time
 import logging
 
+from abc import ABCMeta, abstractmethod
 from glob import glob
 from importlib import import_module
 from DocStruct.Base import GetSession, S3, SQS
 
 
+DATADIR_PATH = '/tmp'
 NUM_MAX_RETRIES = 3
 JOBS_MAP = {}
 
@@ -31,6 +33,80 @@ def JobWithName(jobname):
 
 
 Job = JobWithName('')
+
+
+class S3BackedFile(object):
+
+  __metaclass__ = ABCMeta
+
+  def __init__(self, *, InputKey, OutputKeyPrefix, Config, Logger):
+    self.InputKey = InputKey
+    self.OutputKeyPrefix = OutputKeyPrefix
+    self.Config = Config
+    self.Logger = Logger
+    # Mainly populated by child class
+    self.Output = {
+      'InputKey': self.InputKey,
+      'OutputKeyPrefix': self.OutputKeyPrefix,
+      'Outputs': [],
+      }
+    self._LocalFilePath = None
+    self._FilePathsToCleanup = []
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    # Write to output.json if there was no exception
+    if not exc_type:
+        S3.PutJSON(
+          session=self.Config.Session,
+          bucket=self.Config.S3_OutputBucket,
+          key="{0}output.json".format(self.OutputKeyPrefix),
+          content=self.Output
+          )
+        self.Logger.debug("Wrote output.json")
+        self.Logger.debug(self.Output)
+    # We're done with the temp file, delete it
+    if len(self._FilePathsToCleanup):
+      for fpath in self._FilePathsToCleanup:
+        if os.path.exists(fpath):
+          os.remove(fpath)
+          self.Logger.debug("Removed {0}".format(fpath))
+
+  @property
+  def LocalFilePath(self):
+    # Check if we've already downloaded the file from S3
+    if not self._LocalFilePath or not os.path.exists(self._LocalFilePath):
+      # Prepare path to which the file will be saved
+      fpath = self.GetLocalFilePathFromS3Key(Key=self.InputKey)
+      # Download and save to file
+      if not os.path.exists(fpath):
+        with open(fpath, 'wb') as fp:
+          fp.write(S3.GetObject(session=self.Config.Session, bucket=self.Config.S3_InputBucket, key=self.InputKey))
+      # Set _LocalFilePath
+      self._LocalFilePath = fpath
+      # Add the file to the cleanup array
+      self.MarkFilePathForCleanup(fpath)
+      # Log message and we're done
+      self.Logger.debug("Download {0} from S3 and saved to {1}".format(self.InputKey, self._LocalFilePath))
+    return self._LocalFilePath
+
+  def MarkFilePathForCleanup(self, FilePath):
+    self._FilePathsToCleanup.append(FilePath)
+
+  @abstractmethod
+  def Run(self):
+    pass
+
+  @classmethod
+  def GetLocalFilePathFromS3Key(cls, *, Key, KeyPrefix=''):
+    if KeyPrefix.endswith('/'):
+      KeyPrefix = KeyPrefix[:-1]
+    if Key.startswith('/'):
+      Key = Key[1:]
+    Key = os.path.join(KeyPrefix, Key)
+    return os.path.join(DATADIR_PATH, Key.replace('/', '--'))
 
 
 def ProcessMessage(*, Message, Config, Logger):
@@ -86,7 +162,11 @@ def ProcessMessage(*, Message, Config, Logger):
   return None
 
 
-def Run(*, Config, Logger, SleepAmount=20):
+def Run(*, DataDirPath, Config, Logger, SleepAmount=20):
+  # Change data directory to that which is specified on the command line
+  global DATADIR_PATH
+  DATADIR_PATH = DataDirPath
+
   # Import all the other modules in this package
   # This way, we make sure that all the jobs are registered and ready to use while processing
   # Loop over the list of files in the DocStruct.Jobs package and import each one

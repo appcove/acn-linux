@@ -4,8 +4,7 @@ from DocStruct.Base import ElasticTranscoder
 from . import Job
 
 
-@Job
-def TranscodeVideo(*, InputKey, OutputKeyPrefix, OutputFormats, Config, Logger):
+def TranscodeVideoBase(*, InputKey, OutputKeyPrefix, OutputFormats, Config, Logger):
   Logger.debug("TranscodeVideo started for {0}".format(InputKey))
   # Convert formats to output types
   Outputs = []
@@ -27,3 +26,15 @@ def TranscodeVideo(*, InputKey, OutputKeyPrefix, OutputFormats, Config, Logger):
   Logger.debug("ElasticTranscoder job created: {0}".format(ret["Job"]["Arn"]))
   # Now we are ready to return
   return ret
+
+
+@Job
+def TranscodeVideo(*, InputKey, OutputKeyPrefix, Config, Logger):
+  return TranscodeVideoBase(
+    InputKey=InputKey,
+    OutputKeyPrefix=OutputKeyPrefix,
+    OutputFormats=('webm', 'mp4'),
+    Config=Config,
+    Logger=Logger,
+    )
+

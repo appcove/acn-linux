@@ -6,74 +6,146 @@ import mimetypes
 
 from hashlib import sha1
 from ..Base import GetSession, S3
-from . import Job
+from . import Job, S3BackedFile
 
 
 BIN_CONVERT = "/usr/bin/convert"
+BIN_IDENTIFY = "/usr/bin/identify"
 Output = collections.namedtuple('Output', ('Width', 'Height', 'OutputKey'))
 
 
-def DownloadImageFromS3(Config, SourceKey):
-  fpath = os.path.join('/tmp', SourceKey.replace('/', '--'))
-  if not os.path.exists(fpath):
-    with open(fpath, 'wb') as fp:
-      fp.write(S3.GetObject(session=Config.Session, bucket=Config.S3_InputBucket, key=SourceKey))
-  return fpath
+class S3BackedImage(S3BackedFile):
 
+  def __init__(self, *, JobName, PreferredOutputs, **kwargs):
+    super().__init__(**kwargs)
+    self.JobName = JobName
+    self.PreferredOutputs = PreferredOutputs
+    self._LocalFilePath = None
 
-def ProcessImage(*, Output, Command, SourceKey, OutputKeyPrefix, JobName, Config, Logger):
-  Logger.debug("{0} job for {1} started".format(JobName, SourceKey))
-  subprocess.check_output(Command, stderr=subprocess.STDOUT)
-  Logger.debug("{0} job for {1} completed".format(JobName, SourceKey))
-  # Upload new file to S3
-  Logger.debug("Starting Upload of {0} to S3".format(Output.OutputKey))
-  o_fpath = Command[-1]
-  o_type = mimetypes.guess_type(o_fpath)[0]
-  o_key = os.path.join(OutputKeyPrefix, Output.OutputKey)
-  with open(o_fpath, 'rb') as fp:
-    S3.PutObject(session=Config.Session, bucket=Config.S3_OutputBucket, key=o_key, content=fp, type_=o_type)
-  Logger.debug("Finished Upload of {0} to S3".format(Output.OutputKey))
-  # Delete the temporary output file
-  os.remove(o_fpath)
+  def Inspect(self, FilePath):
+    out = subprocess.check_output((BIN_IDENTIFY, FilePath), stderr=subprocess.STDOUT)
+    parts = out.decode('utf-8').split(' ')
+    ftype = parts[1]
+    fsize = parts[2]
+    fsize_parts = fsize.split('x')
+    fwidth = fsize_parts[0]
+    fheight = fsize_parts[1]
+    return {
+      "Type": ftype,
+      "Width": int(fwidth),
+      "Height": int(fheight),
+      }
+
+  def Process(self, *, Output, Command):
+    # Process the image by executing the given command
+    self.Logger.debug("{0} job for {1} started".format(self.JobName, self.InputKey))
+    subprocess.check_output(Command, stderr=subprocess.STDOUT)
+    self.Logger.debug("{0} job for {1} completed".format(self.JobName, self.InputKey))
+    # Upload new file to S3
+    self.Logger.debug("Starting Upload of {0} to S3".format(Output.OutputKey))
+    o_fpath = Command[-1]
+    o_type = mimetypes.guess_type(o_fpath)[0] or "application/octet-stream"
+    o_key = os.path.join(self.OutputKeyPrefix, Output.OutputKey)
+    with open(o_fpath, 'rb') as fp:
+      S3.PutObject(
+        session=self.Config.Session,
+        bucket=self.Config.S3_OutputBucket,
+        key=o_key,
+        content=fp,
+        type_=o_type
+        )
+    self.Logger.debug("Finished Upload of {0} to S3".format(Output.OutputKey))
+    # inspect file and save the output so that we can build output.json
+    o_fprops = self.Inspect(o_fpath)
+    o_fprops['Key'] = o_key
+    # Save the returned properties to create output.json
+    self.Output['Outputs'].append(o_fprops)
+    # Mark file for deletion
+    self.MarkFilePathForCleanup(o_fpath)
+    # Return key of the output
+    return o_fprops
+
+  @property
+  def LocalFilePath(self):
+    ret = super().LocalFilePath
+    # Inspect the input file and save its properties first
+    i_fprops = self.Inspect(ret)
+    i_fprops['Key'] = self.InputKey
+    self.Output['Outputs'] = [i_fprops]
+    # Return original
+    return ret
+
+  def Resize(self):
+    self.Logger.debug("ResizeImage job for {0} started".format(self.InputKey))
+    FilePath = self.LocalFilePath
+    # Now we can start main processing
+    OutputKeys = []
+    # Loop over required outputs to create them
+    for o_ in self.PreferredOutputs:
+      o = Output(*o_)
+      cmd = (
+        BIN_CONVERT,
+        FilePath,
+        '-resize', '{0}x{1}'.format(str(o.Width), str(o.Height)),
+        self.GetLocalFilePathFromS3Key(KeyPrefix=self.OutputKeyPrefix, Key=o.OutputKey),
+        )
+      # Now run the command
+      self.Process(Output=o, Command=cmd)
+
+  def Normalize(self):
+    self.Logger.debug("NormalizeImage job for {0} started".format(self.InputKey))
+    # Download the required file and save it to a temp location
+    FilePath = self.LocalFilePath
+    OutputKeys = []
+    # Loop over required outputs to create them
+    for o_ in self.PreferredOutputs:
+      o = Output(*o_)
+      cmd = (
+        BIN_CONVERT,
+        FilePath,
+        '-resize', '{0}x{1}^'.format(str(o.Width), str(o.Height)),
+        '-gravity', 'Center',
+        '-extent', '{0}x{1}'.format(str(o.Width), str(o.Height)),
+        self.GetLocalFilePathFromS3Key(KeyPrefix=self.OutputKeyPrefix, Key=o.OutputKey),
+        )
+      # Now run the command
+      self.Process(Output=o, Command=cmd)
+
+  def Run(self):
+    if self.JobName == 'ResizeImage':
+      return self.Resize()
+    if self.JobName == 'NormalizeImage':
+      return self.Normalize()
+    raise Exception("{0} is not a known job name".format(self.JobName))
 
 
 @Job
-def ResizeImage(*, SourceKey, OutputKeyPrefix, Outputs, Config, Logger):
-  Logger.debug("ResizeImage job for {0} started".format(SourceKey))
-  # Download the required file and save it to a temp location
-  FilePath = DownloadImageFromS3(Config, SourceKey)
-  # Loop over required outputs to create them
-  for o_ in Outputs:
-    o = Output(*o_)
-    cmd = (
-      BIN_CONVERT,
-      FilePath,
-      '-resize', '{0}x{1}'.format(str(o.Width), str(o.Height)),
-      os.path.join('/tmp', '{0}{1}'.format(OutputKeyPrefix.replace('/', '--'), o.OutputKey)),
-      )
-    # Now we can actually run the command
-    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, OutputKeyPrefix=OutputKeyPrefix, JobName='ResizeImage', Config=Config, Logger=Logger)
-  # We're done with the temp file, delete it
-  os.remove(FilePath)
+def ResizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
+  # Prepare context in which we'll run
+  ctxt = S3BackedImage(
+    InputKey=InputKey,
+    OutputKeyPrefix=OutputKeyPrefix,
+    Config=Config,
+    Logger=Logger,
+    JobName='ResizeImage',
+    PreferredOutputs=[(200, 200, '200x200.jpg'), (300, 300, '300x300.jpg')]
+    )
+  # Start the processing
+  with ctxt as im:
+    im.Run()
 
 
 @Job
-def NormalizeImage(*, SourceKey, OutputKeyPrefix, Outputs, Config, Logger):
-  Logger.debug("NormalizeImage job for {0} started".format(SourceKey))
-  # Download the required file and save it to a temp location
-  FilePath = DownloadImageFromS3(Config, SourceKey)
-  # Loop over required outputs to create them
-  for o_ in Outputs:
-    o = Output(*o_)
-    cmd = (
-      BIN_CONVERT,
-      FilePath,
-      '-resize', '{0}x{1}^'.format(str(o.Width), str(o.Height)),
-      '-gravity', 'Center',
-      '-extent', '{0}x{1}'.format(str(o.Width), str(o.Height)),
-      os.path.join('/tmp', '{0}{1}'.format(OutputKeyPrefix.replace('/', '--'), o.OutputKey)),
-      )
-    # Now we can actually run the command
-    ProcessImage(Output=o, Command=cmd, SourceKey=SourceKey, OutputKeyPrefix=OutputKeyPrefix, JobName='NormalizeImage', Config=Config, Logger=Logger)
-  # We're done with the temp file, delete it
-  os.remove(FilePath)
+def NormalizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
+  # Prepare context in which we'll run
+  ctxt = S3BackedImage(
+    InputKey=InputKey,
+    OutputKeyPrefix=OutputKeyPrefix,
+    Config=Config,
+    Logger=Logger,
+    JobName='NormalizeImage',
+    PreferredOutputs=[(200, 200, '200x200-normalized.jpg'), (300, 300, '300x300-normalized.jpg')]
+    )
+  # Start the processing
+  with ctxt as im:
+    im.Run()
