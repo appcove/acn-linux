@@ -1,0 +1,51 @@
+#!/usr/bin/python3.3
+# vim:encoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython33 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+
+  if GetInput_YesNo('Install headless openoffice (DEF)? ', Default='yes'):
+    call(('yum', 'install', '-y', 'openoffice.org-headless', 'openoffice.org-writer'))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Install python bindings for openoffice (DEF)? ', Default='yes'):
+    call(('yum', 'install', '-y', 'openoffice.org-pyuno'))
+    print('   ... done')
+    print()
+
+  if not exists('/etc/init.d/openoffice'):
+    if GetInput_YesNo('Install /etc/init.d/openoffice (DEF)? ', Default='yes'):
+      data = ReadSystemFile('etc/openoffice')
+      WriteSystemFile('etc/init.d/openoffice', data)
+      print('   ... done')
+      print()
+
+  if GetInput_YesNo('Setup headless openoffice server to start automatically (DEF)? ', Default='yes'):
+    check_call(('chkconfig', '--add', 'openoffice'))
+    check_call(('chkconfig', '--level', '2345', 'openoffice', 'on'))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Start headless openoffice? (DEF)? ', Default='yes'):
+    check_call(('service', 'openoffice', 'restart'))
+    print('   ... done')
+    print()
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()
+  print()
+  print('*** User Abort ***')
+  print()

@@ -33,6 +33,10 @@ parser.add_argument(
   "--logfile", dest="logfilepath", type=lambda s: os.path.abspath(s) if s else "", nargs="?", default="",
   help="Path to the file where output from process should be logged."
   )
+parser.add_argument(
+  "--datadirpath", dest="datadirpath", type=lambda s: os.path.abspath(s) if s else "/tmp", nargs="?", default="",
+  help="Path where intermediate files must be saved before processing."
+  )
 # Parse arguments
 args = parser.parse_args()
 
@@ -77,4 +81,4 @@ else:
   Config = EnvironmentConfig(CredsFilePath=session, EnvironmentID=data['EnvironmentID'])
 
 # Setup and run the processor
-Run(Config=Config, Logger=LOGGER)
+Run(DataDirPath=args.datadirpath, Config=Config, Logger=LOGGER)
