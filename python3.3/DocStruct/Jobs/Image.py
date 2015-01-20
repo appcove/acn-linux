@@ -10,7 +10,6 @@ from . import Job, S3BackedFile
 
 
 BIN_CONVERT = "/usr/bin/convert"
-BIN_IDENTIFY = "/usr/bin/identify"
 Output = collections.namedtuple('Output', ('Width', 'Height', 'OutputKey'))
 
 
@@ -21,20 +20,6 @@ class S3BackedImage(S3BackedFile):
     self.JobName = JobName
     self.PreferredOutputs = PreferredOutputs
     self._LocalFilePath = None
-
-  def Inspect(self, FilePath):
-    out = subprocess.check_output((BIN_IDENTIFY, FilePath), stderr=subprocess.STDOUT)
-    parts = out.decode('utf-8').split(' ')
-    ftype = parts[1]
-    fsize = parts[2]
-    fsize_parts = fsize.split('x')
-    fwidth = fsize_parts[0]
-    fheight = fsize_parts[1]
-    return {
-      "Type": ftype,
-      "Width": int(fwidth),
-      "Height": int(fheight),
-      }
 
   def Process(self, *, Output, Command):
     # Process the image by executing the given command
@@ -56,7 +41,7 @@ class S3BackedImage(S3BackedFile):
         )
     self.Logger.debug("Finished Upload of {0} to S3".format(Output.OutputKey))
     # inspect file and save the output so that we can build output.json
-    o_fprops = self.Inspect(o_fpath)
+    o_fprops = self.InspectImage(o_fpath)
     o_fprops['Key'] = o_key
     # Save the returned properties to create output.json
     self.Output['Outputs'].append(o_fprops)
@@ -69,9 +54,9 @@ class S3BackedImage(S3BackedFile):
   def LocalFilePath(self):
     ret = super().LocalFilePath
     # Inspect the input file and save its properties first
-    i_fprops = self.Inspect(ret)
+    i_fprops = self.InspectImage(ret)
     i_fprops['Key'] = self.InputKey
-    self.Output['Outputs'] = [i_fprops]
+    self.Output['Input'] = i_fprops
     # Return original
     return ret
 

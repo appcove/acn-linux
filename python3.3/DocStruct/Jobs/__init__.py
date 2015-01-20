@@ -3,6 +3,7 @@ import os
 import json
 import time
 import logging
+import subprocess
 
 from abc import ABCMeta, abstractmethod
 from glob import glob
@@ -10,6 +11,7 @@ from importlib import import_module
 from DocStruct.Base import GetSession, S3, SQS
 
 
+BIN_IDENTIFY = "/usr/bin/identify"
 DATADIR_PATH = '/tmp'
 NUM_MAX_RETRIES = 3
 JOBS_MAP = {}
@@ -48,6 +50,7 @@ class S3BackedFile(object):
     self.Output = {
       'InputKey': self.InputKey,
       'OutputKeyPrefix': self.OutputKeyPrefix,
+      'Input': {},
       'Outputs': [],
       }
     self._LocalFilePath = None
@@ -92,9 +95,6 @@ class S3BackedFile(object):
       self.Logger.debug("Download {0} from S3 and saved to {1}".format(self.InputKey, self._LocalFilePath))
     return self._LocalFilePath
 
-  def MarkFilePathForCleanup(self, FilePath):
-    self._FilePathsToCleanup.append(FilePath)
-
   @abstractmethod
   def Run(self):
     pass
@@ -107,6 +107,23 @@ class S3BackedFile(object):
       Key = Key[1:]
     Key = os.path.join(KeyPrefix, Key)
     return os.path.join(DATADIR_PATH, Key.replace('/', '--'))
+
+  def MarkFilePathForCleanup(self, FilePath):
+    self._FilePathsToCleanup.append(FilePath)
+
+  def InspectImage(self, FilePath):
+    out = subprocess.check_output((BIN_IDENTIFY, FilePath), stderr=subprocess.STDOUT)
+    parts = out.decode('utf-8').split(' ')
+    ftype = parts[1]
+    fsize = parts[2]
+    fsize_parts = fsize.split('x')
+    fwidth = fsize_parts[0]
+    fheight = fsize_parts[1]
+    return {
+      "Type": ftype,
+      "Width": int(fwidth),
+      "Height": int(fheight),
+      }
 
 
 def ProcessMessage(*, Message, Config, Logger):

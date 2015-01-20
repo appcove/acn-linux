@@ -8,8 +8,7 @@
 # Licensed under the GNU LGPL v2.1 - http://www.gnu.org/licenses/lgpl-2.1.html
 # - or any later version.
 #
-DEFAULT_OPENOFFICE_HOST = 'localhost'
-DEFAULT_OPENOFFICE_PORT = 8100
+from __future__ import print_function
 
 import uno
 #http://hackerstv.blogspot.com/2010/03/soved-documentconverterpy-via-php-on.html
@@ -20,6 +19,11 @@ from os.path import abspath, isfile, splitext
 from com.sun.star.beans import PropertyValue
 from com.sun.star.task import ErrorCodeIOException
 from com.sun.star.connection import NoConnectException
+
+
+DEFAULT_OPENOFFICE_HOST = 'localhost'
+DEFAULT_OPENOFFICE_PORT = 8100
+
 
 FAMILY_TEXT = "Text"
 FAMILY_WEB = "Web"
@@ -212,3 +216,25 @@ class DocumentConverter:
             prop.Value = dict[key]
             props.append(prop)
         return tuple(props)
+
+
+if __name__ == "__main__":
+    import os
+
+    if len(sys.argv) < 3:
+        print("USAGE: python %s <input-file> <output-file>" % sys.argv[0])
+        sys.exit(255)
+    if not isfile(sys.argv[1]):
+        print("no such input file: %s" % sys.argv[1])
+        sys.exit(1)
+
+    try:
+        envvarname = os.environ.get('OO_HOST_VAR', 'OOSERVER_PORT_8100_TCP_ADDR')
+        converter = DocumentConverter(host=os.environ.get(envvarname, DEFAULT_OPENOFFICE_HOST))
+        converter.convert(sys.argv[1], sys.argv[2])
+    except DocumentConversionException as exception:
+        print("ERROR! " + str(exception))
+        sys.exit(1)
+    except ErrorCodeIOException as exception:
+        print("ERROR! ErrorCodeIOException %d" % exception.ErrCode)
+        sys.exit(1)
