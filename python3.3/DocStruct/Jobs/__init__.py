@@ -1,5 +1,6 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 import os
+import os.path
 import json
 import time
 import logging
@@ -48,6 +49,7 @@ class S3BackedFile(object):
     self.Logger = Logger
     # Mainly populated by child class
     self.Output = {
+      'state': 'PROGRESSING',
       'InputKey': self.InputKey,
       'OutputKeyPrefix': self.OutputKeyPrefix,
       'Input': {},
@@ -60,17 +62,24 @@ class S3BackedFile(object):
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
-    # Write to output.json if there was no exception
+    # Figure out the state of the job
     if not exc_type:
-        S3.PutJSON(
-          session=self.Config.Session,
-          bucket=self.Config.S3_OutputBucket,
-          key="{0}output.json".format(self.OutputKeyPrefix),
-          content=self.Output
-          )
-        self.Logger.debug("Wrote output.json")
-        self.Logger.debug(self.Output)
-    # We're done with the temp file, delete it
+      self.Output['state'] = 'COMPLETED'
+    else:
+      self.Output['state'] = 'ERROR'
+      self.Output['Error'] = exc_value
+
+    # Write to output.json if there was no exception
+    S3.PutJSON(
+      session=self.Config.Session,
+      bucket=self.Config.S3_OutputBucket,
+      key=os.path.join(self.OutputKeyPrefix, "output.json"),
+      content=self.Output
+      )
+    self.Logger.debug("Wrote output.json")
+    self.Logger.debug(self.Output)
+
+    # We're done with temp files, delete it
     if len(self._FilePathsToCleanup):
       for fpath in self._FilePathsToCleanup:
         if os.path.exists(fpath):

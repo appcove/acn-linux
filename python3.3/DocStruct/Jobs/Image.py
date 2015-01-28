@@ -105,7 +105,7 @@ class S3BackedImage(S3BackedFile):
 
 
 @Job
-def ResizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
+def ResizeImage(*, InputKey, OutputKeyPrefix, PreferredOutputs, Config, Logger):
   # Prepare context in which we'll run
   ctxt = S3BackedImage(
     InputKey=InputKey,
@@ -113,7 +113,7 @@ def ResizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
     Config=Config,
     Logger=Logger,
     JobName='ResizeImage',
-    PreferredOutputs=[(200, 200, '200x200.jpg'), (300, 300, '300x300.jpg')]
+    PreferredOutputs=PreferredOutputs,
     )
   # Start the processing
   with ctxt as im:
@@ -121,7 +121,7 @@ def ResizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
 
 
 @Job
-def NormalizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
+def NormalizeImage(*, InputKey, OutputKeyPrefix, PreferredOutputs, Config, Logger):
   # Prepare context in which we'll run
   ctxt = S3BackedImage(
     InputKey=InputKey,
@@ -129,7 +129,7 @@ def NormalizeImage(*, InputKey, OutputKeyPrefix, Config, Logger):
     Config=Config,
     Logger=Logger,
     JobName='NormalizeImage',
-    PreferredOutputs=[(200, 200, '200x200-normalized.jpg'), (300, 300, '300x300-normalized.jpg')]
+    PreferredOutputs=PreferredOutputs,
     )
   # Start the processing
   with ctxt as im:
