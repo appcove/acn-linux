@@ -5,9 +5,11 @@ import json
 ##################################################
 class JobSpecification(object):
 
-  def __init__(self, *, InputKey, OutputKeyPrefix, Name=""):
-    if Name:
-      self.Name = Name
+  Name = ""
+
+  def __init__(self, *, InputKey, OutputKeyPrefix):
+    if not self.Name:
+      self.Name = self.__class__.__name__.replace('Job', '')
     self.InputKey = InputKey
     self.OutputKeyPrefix = OutputKeyPrefix
 
@@ -58,13 +60,15 @@ class ConvertToPDFJob(JobSpecification):
 ##################################################
 class ResizeImageJob(JobSpecification):
 
-  Name = "ResizeImage"
-
   @property
   def ExtraParams(self):
     return {
-      "PreferredOutputs": ((200, 200, '200x200.jpg'), (300, 300, '300x300.jpg'),)
-      }
+      "PreferredOutputs": (
+        (0, 0, 'Original.jpg'),
+        (1200, 1200, 'Regular.jpg'),
+        (480, 480, 'Small.jpg'),
+        (160, 160, 'Thumbnail.jpg'),
+      )}
 
 
 ##################################################

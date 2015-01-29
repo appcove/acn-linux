@@ -68,12 +68,19 @@ class S3BackedImage(S3BackedFile):
     # Loop over required outputs to create them
     for o_ in self.PreferredOutputs:
       o = Output(*o_)
-      cmd = (
-        BIN_CONVERT,
-        FilePath,
-        '-resize', '{0}x{1}'.format(str(o.Width), str(o.Height)),
-        self.GetLocalFilePathFromS3Key(KeyPrefix=self.OutputKeyPrefix, Key=o.OutputKey),
-        )
+      if not o.Width or not o.Height:
+        cmd = (
+          BIN_CONVERT,
+          FilePath,
+          self.GetLocalFilePathFromS3Key(KeyPrefix=self.OutputKeyPrefix, Key=o.OutputKey),
+          )
+      else:
+        cmd = (
+          BIN_CONVERT,
+          FilePath,
+          '-resize', '{0}x{1}'.format(str(o.Width), str(o.Height)),
+          self.GetLocalFilePathFromS3Key(KeyPrefix=self.OutputKeyPrefix, Key=o.OutputKey),
+          )
       # Now run the command
       self.Process(Output=o, Command=cmd)
 
