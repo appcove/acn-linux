@@ -8,13 +8,13 @@
 . /etc/rc.d/init.d/functions
 
 RETVAL=0
-SOFFICE_PATH='/usr/bin/soffice'
-SOFFICE_ARGS='-accept=socket,host=localhost,port=8100;urp;StarOffice.ServiceManager -headless -norestore -nofirststartwizard -nologo'
+SOFFICE_PATH='/usr/lib64/libreoffice/program/soffice.bin'
+SOFFICE_ARGS='--accept=socket,host=localhost,port=8100;urp;StarOffice.ServiceManager --headless --norestore --nofirststartwizard --nologo'
 SOFFICE_PIDFILE=/var/run/soffice.bin.pid
 
 start_soffice() {
        echo -n $"Starting headless OpenOffice"
-       $SOFFICE_PATH/soffice.bin $SOFFICE_ARGS >/dev/null 2>&1 &
+       $SOFFICE_PATH $SOFFICE_ARGS >/dev/null 2>&1 &
        [ $? -eq 0 ] && echo_success || echo_failure
        pidof soffice.bin > $SOFFICE_PIDFILE
        echo
@@ -24,7 +24,7 @@ start() {
 }
 stop() {
        echo -n $"Stopping headless OpenOffice"
-       killproc soffice
+       killproc soffice.bin
        echo
 }
 case "$1" in
