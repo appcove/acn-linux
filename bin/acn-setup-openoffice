@@ -19,20 +19,20 @@ try:
     print('   ... done')
     print()
 
-  if not exists('/etc/init.d/openoffice'):
-    if GetInput_YesNo('Install /etc/init.d/openoffice (DEF)? ', Default='yes'):
-      data = ReadSystemFile('etc/openoffice')
-      WriteSystemFile('etc/init.d/openoffice', data)
-      print('   ... done')
-      print()
+  if not exists('/etc/init.d/openoffice') and GetInput_YesNo('Install /etc/init.d/openoffice (DEF)? ', Default='yes'):
+    data = ReadSystemFile('etc/init.d/openoffice')
+    WriteSystemFile('etc/init.d/openoffice', data)
+    check_call(('chmod', 'u+x', '/etc/init.d/openoffice'))
+    print('   ... done')
+    print()
 
-  if GetInput_YesNo('Setup headless openoffice server to start automatically (DEF)? ', Default='yes'):
+  if exists('/etc/init.d/openoffice') and GetInput_YesNo('Setup headless openoffice server to start automatically (DEF)? ', Default='yes'):
     check_call(('chkconfig', '--add', 'openoffice'))
     check_call(('chkconfig', '--level', '2345', 'openoffice', 'on'))
     print('   ... done')
     print()
 
-  if GetInput_YesNo('Start headless openoffice? (DEF)? ', Default='yes'):
+  if exists('/etc/init.d/openoffice') and GetInput_YesNo('Start headless openoffice? (DEF)? ', Default='yes'):
     check_call(('service', 'openoffice', 'restart'))
     print('   ... done')
     print()
