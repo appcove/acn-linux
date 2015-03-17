@@ -1,0 +1,243 @@
+#!/usr//bin/python
+
+import sys
+
+from optparse       import OptionParser
+from os.path        import join, isdir, exists, dirname
+from os             import mkdir, makedirs, listdir, path, getcwd, getenv
+from subprocess     import call, Popen, PIPE
+from shutil         import rmtree
+from ConfigParser 	import RawConfigParser
+
+from StringIO import StringIO
+
+def die(sMessage):
+	print
+	print sMessage
+	print
+	sys.exit(2)
+
+Parser = OptionParser(usage="%prog <commit1> <commit2>")
+
+# Parse command line
+Opt, Arg = Parser.parse_args()
+
+if (len(Arg) != 2) or (len(Arg) == 1 and Arg[0] in ('HELP','help')) :
+	print
+	Parser.print_usage()
+	print 'NOTE: The WORK option can be used to compare against your working directory (includes all new and staged/index files)'
+	print '      For example the following command will compare the top commit against your working directory...'
+	print '      git-diff-dump HEAD WORK'
+	print
+	sys.exit(2)
+
+###
+# Grab local settings for the Diff-Dump paths
+
+
+Path = Popen(['git','config','diff-dump.output-path'],  stdout=PIPE).communicate()[0]
+Path = Path.strip()
+
+if not Path:
+	print("Use the following command to set the .gitconfig value...")
+	print
+	print("git config --global diff-dump.output-path ~/CodeDiff")
+	print
+	sys.exit(2)
+
+if not exists(Path):
+    die("Path '{0}' does not exist! ".format(Path))
+
+Path1 = join(Path, 'diff-dump-1')
+Path2 = join(Path, 'diff-dump-2')
+
+Commit1 = Arg[0]
+Commit2 = Arg[1]
+
+#import pdb
+#pdb.set_trace()
+
+# Make sure paths exist in the first place, then re-create
+
+if exists(Path1):
+	print "  Remove tree : {0}".format(Path1)
+	rmtree(Path1)
+
+if exists(Path2):
+	print "  Remove tree : {0}".format(Path2)
+	rmtree(Path2)
+
+print "  Make dir    : {0}".format(Path1)
+mkdir(Path1)
+
+print "  Make dir    : {0}".format(Path2)
+mkdir(Path2)
+
+print
+print "git diff dump ... Generating diff ..."
+print
+print "   Path 1   : {0}".format(Path1)
+print "   Path 2   : {0}".format(Path2)
+print "   Commit 1 : {0}".format(Commit1)
+print "   Commit 2 : {0}".format(Commit2)
+print
+
+
+###################################################################################################
+
+#if 'WORK' in (Commit1, Commit2) and 'INDEX' in (Commit1, Commit2):
+#
+#	# compares the index and the files on the filesystem
+#	
+#	proc = Popen(("git-diff-files"), stdout=PIPE)		
+#
+#elif 'INDEX' in (Commit1, Commit2):
+#
+#	# compares the <tree-ish>  (commit, tag or tree) and the index
+#	
+#	proc = Popen(("git-diff-index", "--cached", Commit1 if Commit1 != 'INDEX' else Commit2), stdout=PIPE)	
+	
+	
+if 'WORK' in (Commit1, Commit2):
+
+	# compares the <tree-ish> (commit, tag or tree) and the files on the filesystem
+	
+	proc = Popen(("git", "diff-index", Commit1 if Commit1 != 'WORK' else Commit2), stdout=PIPE)
+	
+else:
+
+	# compares the trees named by the two arguments
+	
+	proc = Popen(("git", "diff-tree", "-r", Commit1, Commit2), stdout=PIPE)
+
+sOut, sErr = proc.communicate()
+
+if proc.returncode != 0:
+	die(sErr)
+
+class DiffLine(object):
+	def __init__(self, sLine):
+	
+		# Line consists of 2-3 tab delimited fields.
+		# see: http://www.kernel.org/pub/software/scm/git/docs/git-diff-tree.html
+		# 
+		# Field 0 contains space delimited fields
+		# Field 1 contains the first file name
+		# Field 2, if present, contains the second file name
+		
+		# Parse sLine
+		Parts = sLine.split("\t")
+
+		# Set properties
+		
+		#//~~ JTG 2009-09-22
+		# This code is needed because git-diff-index (used when Commit1 == 'WORK') functions differently than git-diff-tree, and 
+		# the 'updated code on the left'/'original code the right' was being switched.
+		if Commit1 == 'WORK' :
+			self.Blob2, self.Blob1 = Parts[0].split(" ")[2:4]
+			self.Path1 = Parts[2] if len(Parts) == 3 else Parts[1]
+			self.Path2 = Parts[1]
+		else :		
+			self.Blob1, self.Blob2 = Parts[0].split(" ")[2:4]
+			self.Path1 = Parts[1]
+			self.Path2 = Parts[2] if len(Parts) == 3 else Parts[1]
+		
+	def __repr__(self):
+		return "< {0} -- p1:{1}, p2:{2}, b1:{3}, b2:{4}>".format(self.__class__.__name__, self.Path1, self.Path2, self.Blob1, self.Blob2)
+
+	def Print(self):
+		print "  1 : {0} : {1}".format(self.Blob1[0:8], self.Path1)
+		print "  2 : {0} : {1}".format(self.Blob2[0:8], self.Path2)
+
+
+# FileList will contain a list of DiffLine objects
+FileList = []
+for line in sOut.strip().split("\n"):
+	if line:
+		FileList.append(DiffLine(line))
+	
+
+
+
+# Actually do the work
+for dl in FileList:
+	
+	print
+	dl.Print()
+
+	FullPath1 = join(Path1, dl.Path1)
+	FullPath2 = join(Path2, dl.Path2)
+
+	print FullPath1
+	print FullPath2
+
+	if not exists(dirname(FullPath1)):
+		makedirs(dirname(FullPath1))
+
+	if not exists(dirname(FullPath2)):
+		makedirs(dirname(FullPath2))
+	
+	if dl.Blob1[0:8] != '00000000' :
+		# Open File1
+		File1 = open(FullPath1, 'wb')
+		Popen(('git', 'cat-file', 'blob', dl.Blob1), stdout=File1)
+		File1.close()
+		
+	elif Commit1 == 'WORK' and dl.Blob1[0:8] == '00000000' :
+		# Open WORK File
+		
+		WorkFile = path.abspath(getcwd()) + '/' + dl.Path1
+		#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path1
+		
+		File1 = open(FullPath1, 'wb')
+		Popen(('cat', WorkFile), stdout=File1)
+		File1.close()
+		
+
+	if dl.Blob2[0:8] != '00000000':
+		# Open File2
+		File2 = open(FullPath2, 'wb')
+		Popen(('git', 'cat-file', 'blob', dl.Blob2), stdout=File2)
+		File2.close()
+		
+	elif Commit2 == 'WORK' and dl.Blob2[0:8] == '00000000' :
+		# Open WORK File
+		
+		WorkFile = path.abspath(getcwd()) + '/' + dl.Path2
+		#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path2
+		
+		File2 = open(FullPath2, 'wb')
+		Popen(('cat', WorkFile), stdout=File2)
+		File2.close()
+
+	# Make directories to path 1
+
+print 
+print "#" * 100
+print
+
+print "Commit 1 : {0}".format(Commit1)
+print "Commit 2 : {0}".format(Commit2)
+Popen(('tree', Path1, Path2))
+
+#print FileList
+
+#for File in FileList:
+#	x = open(Path, 'wb')
+	#proc = Popen(['git-cat-file', 'blob', File], stdout=x.stdin)
+#	print File.Path1
+
+#Path1Files = listdir(Path1)
+
+#Path1Files = listdir(Path2)
+
+
+
+
+
+
+
+
+
+
+
