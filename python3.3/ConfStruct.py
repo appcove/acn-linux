@@ -433,6 +433,23 @@ class Directory(String):
       raise ValueError("Directory '{0}' does not exist".format(value))
     return value
 
+class Domain(Object):
+  class Name(String):
+    RegexMatch = r'^[0-9a-z_-]+(\.[0-9a-z_-]+)+$'
+  @property 
+  def HTTP(self):
+    return 'http://' + self.Name
+  @property 
+  def HTTPS(self):
+    return 'https://' + self.Name
+  def __repr__(self):
+    return repr({
+      'Name': self.Name, 
+      'HTTP': self.HTTP, 
+      'HTTPS': self.HTTPS
+      })
+    
+  
 
 class FileStruct(Object):
   class Path(Directory):
@@ -457,6 +474,7 @@ class Port(Integer):
   Maxvalue = 65535
 
 _port = Port
+
 
 class UserPass(Object):
   class Username(String):
