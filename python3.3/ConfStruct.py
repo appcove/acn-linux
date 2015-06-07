@@ -611,6 +611,60 @@ class Pusher(Object):
 
 
 
+class DocStruct(Object):
+  Description = 'AWS Access Info for DocStruct'
+
+  class User(Object):
+    Description = 'Project specific user given permissions to access project specific resources'
+
+    class ARN(String):
+      Description = 'ARN identifying this user'
+
+    class Username(String):
+      Description = 'Username of this user'
+
+    class AccessKeyId(String):
+      Description = "Access Key ID belonging to this user"
+
+    class SecretKey(String):
+      Description = "Secret Key corresponding to the access_key_id for this user"
+
+    def ToDict(self):
+      return {
+        'arn': self.ARN,
+        'username': self.Username,
+        'access_key_id': self.AccessKeyId,
+        'secret_key': self.SecretKey,
+        }
+ 
+  class SQS(Object):
+    Description = "Project specific SQS related credentials"
+
+    class QueueUrl(String):
+      Description = "URL of queue"
+
+    def ToDict(self):
+      return {
+        'queueurl': self.QueueUrl,
+        }
+  
+  class InputBucket(String):
+    Description = "Name of the input bucket for this project"
+
+  class OutputBucket(String):
+    Description = "Name of the output bucket for this project"
+    
+  class KeyPrefix(String):
+    Description = "A prefix to use when inserting objects into the bucket"
+  
+  def __repr__(self):
+    return repr({
+      'user': self.User.ToDict(),
+      'sqs': self.SQS.ToDict(),
+      'input_bucket': self.InputBucket,
+      'output_bucket': self.OutputBucket,
+      'keyprefix': self.KeyPrefix,
+      })
 
 
 
