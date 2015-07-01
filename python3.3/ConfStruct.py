@@ -455,8 +455,10 @@ class FileStruct(Object):
   class Path(Directory):
     Description = 'Absolute path to FileStruct'
     MustExist = True
-
-
+  def __repr__(self):
+    return repr({
+      'Path': self.Path, 
+      })
 
 
 class ProjectIdentifier(String):
@@ -500,6 +502,33 @@ class Postgres(Object):
       'user': self.Username,
       'password': self.Password,
       'database': self.Database,
+      })
+
+class Mailgun(Object):
+  class URL(String):
+    pass
+  class Key(String):
+    pass
+  def __repr__(self):
+    return repr({
+      'URL': self.URL, 
+      'Key': self.Key,
+      'Auth': ('api', self.Key),
+      })
+
+class Twilio(Object):
+  class URL(String):
+    pass
+  class AccountSID(String):
+    pass
+  class AuthToken(String):
+    pass
+  def __repr__(self):
+    return repr({
+      'URL': self.URL,
+      'AccountSID': self.AccountSID, 
+      'AuthToken': self.AuthToken,
+      'Auth': (self.AccountSID, self.AuthToken),
       })
 
 class Braintree(Object):
