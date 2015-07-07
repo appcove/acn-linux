@@ -2,6 +2,7 @@ if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
    set fileencodings=ucs-bom,utf-8,latin1
 endif
 
+set laststatus=2 " default a status line to show with file path, etc...
 set nocompatible	" Use Vim defaults (much better!)
 set bs=indent,eol,start		" allow backspacing over everything in insert mode
 set ai			" always set autoindenting on
