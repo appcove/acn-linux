@@ -106,6 +106,7 @@ def GetObjectPolicy(bucketname, expiretime, params):
       {"acl": d["acl"]},
       success_action_condition,
       ["starts-with", "$Content-Type", ""],
+      ["starts-with", "$Content-Disposition", ""],
       ["starts-with", "$x-amz-meta-filename", ""],
       ["starts-with", "$name", ""],
     ]),
@@ -236,6 +237,7 @@ def GetFormParameters(session, bucketname, keyuuid, algo="HMAC-SHA256", redirect
     extra = {"AWSAccessKeyId": creds.access_key.strip(), "acl": "authenticated-read"}
   else:
     extra = {}
+  extra['Content-Disposition'] = 'attachment; filename="${filename}"'
   ret = GetBaseFormParameters(bucketname, keyprefix, keyuuid, redirectto, contenttype, extra)
   # Based on the algorithm requested, we will decide on policy
   if algo == "HMAC-SHA256":
@@ -368,3 +370,37 @@ def PutJSON(*, session, bucket, key, content):
     content=json.dumps(content),
     type_="application/json"
     )
+
+
+def ListKeysInBucket(*, session, bucketname, prefix=None):
+  """List the keys available in a bucket
+
+  :param session: The boto3 session to use
+  :type session: boto3.Session
+  :param bucketname: Bucket name within which to find keys
+  :type bucketname: str
+  :param prefix: If provided, the list will be restricted to keys starting with prefix
+  :type prefix: str
+  :return: List of keys available in the bucket
+  :rtype: list
+  """
+  s3conn = session.connect_to("s3")
+  S3Objects = session.get_collection("s3", "S3ObjectCollection")
+  s3objects = S3Objects(connection=s3conn, bucket=bucketname)
+  return s3objects.each(Prefix=prefix)
+
+
+def DeleteObjects(*, session, bucketname, keys):
+  """Deletes the object specified by key
+
+  :param session: The session to use for AWS connection
+  :type session: boto3.session.Session
+  :param bucketname: Name of bucket
+  :type bucketname: str
+  :param keys: Keys to delete from bucket
+  :type keys: iterable
+  """
+  s3conn = session.connect_to("s3")
+  S3Objects = session.get_collection("s3", "S3ObjectCollection")
+  s3objects = S3Objects(connection=s3conn, bucket=bucketname)
+  return s3objects.delete()

@@ -1,6 +1,8 @@
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
+import sys
 import os
 import os.path
+import re
 import json
 import time
 import logging
@@ -12,10 +14,101 @@ from importlib import import_module
 from DocStruct.Base import GetSession, S3, SQS
 
 
-BIN_IDENTIFY = "/usr/bin/identify"
 DATADIR_PATH = '/tmp'
 NUM_MAX_RETRIES = 3
 JOBS_MAP = {}
+
+
+class BinariesClass():
+  
+  _Python2 = ""
+  _Ghostscript = ""
+  _Identify = ""
+  _Convert = ""
+  _DocumentConverter = ""
+  
+  @property
+  def Python2(self):
+    if not self._Python2:
+      try:
+        out = subprocess.check_output('which python2', stderr=subprocess.STDOUT, shell=True)
+        type(self)._Python2 = out.decode('utf-8').strip()
+      except subprocess.CalledProcessError:
+        print()
+        print("Seems like python2 is not available.")
+        print("Please install python2 (>= 2.6) before starting the jobs processor.")
+        print()
+        sys.exit(1)
+    return self._Python2
+  
+  @property
+  def Ghostscript(self):
+    if not self._Ghostscript:
+      try:
+        out = subprocess.check_output('which gs', stderr=subprocess.STDOUT, shell=True)
+        type(self)._Ghostscript = out.decode('utf-8').strip()
+      except subprocess.CalledProcessError:
+        print()
+        print("Seems like ghostscript is not installed.")
+        print("Please install ghostscript before starting the jobs processor.")
+        print()
+        sys.exit(1)
+    return self._Ghostscript
+
+  @property
+  def Identify(self):
+    if not self._Identify:
+      try:
+        out = subprocess.check_output('which identify', stderr=subprocess.STDOUT, shell=True)
+        type(self)._Identify = out.decode('utf-8').strip()
+      except subprocess.CalledProcessError:
+        print()
+        print("Seems like the program identify is not installed.")
+        print("Please install ImageMagick before starting the jobs processor.")
+        print()
+        sys.exit(1)
+    return self._Identify
+
+  @property
+  def Convert(self):
+    if not self._Convert:
+      try:
+        out = subprocess.check_output('which convert', stderr=subprocess.STDOUT, shell=True)
+        type(self)._Convert = out.decode('utf-8').strip()
+      except subprocess.CalledProcessError:
+        print()
+        print("Seems like the program identify is not installed.")
+        print("Please install ImageMagick before starting the jobs processor.")
+        print()
+        sys.exit(1)
+    return self._Convert
+  
+  @property
+  def DocumentConverter(self):
+    if not self._DocumentConverter:
+      converter_path = os.path.join(os.path.dirname(__file__), '../../DocumentConverter.py')
+      if not os.path.exists(converter_path):
+        print()
+        print("Seems like DocumentConverter.py which comes bundled with the DocStruct module is missing.")
+        print("Please upgrade to the latest version of DocStruct before starting the jobs processor.")
+        print()
+        sys.exit(1)
+      else:
+        type(self)._DocumentConverter = converter_path
+      # Try to see if we can use the document converter to convert documents
+      try:
+        subprocess.check_output((self.Python2, self._DocumentConverter, '/tmp/invalid.doc', '/tmp/invalid.pdf'), stderr=subprocess.STDOUT)
+      except subprocess.CalledProcessError as exc:
+        if re.search(r'failed to connect', exc.output.decode('utf-8')):
+          print()
+          print("Seems like we couldn't establish a connection to the headless openoffice server.")
+          print("Please start the headless openoffice server before starting the jobs processor.")
+          print()
+          sys.exit(1)
+    return self._DocumentConverter
+  
+
+Binaries = BinariesClass()
 
 
 class NoMoreRetriesException(Exception):
@@ -38,7 +131,7 @@ def JobWithName(jobname):
 Job = JobWithName('')
 
 
-class S3BackedFile(object):
+class S3BackedFile():
 
   __metaclass__ = ABCMeta
 
@@ -47,6 +140,7 @@ class S3BackedFile(object):
     self.OutputKeyPrefix = OutputKeyPrefix
     self.Config = Config
     self.Logger = Logger
+    self.Binaries = Binaries
     # Mainly populated by child class
     self.Output = {
       'state': 'PROGRESSING',
@@ -121,7 +215,7 @@ class S3BackedFile(object):
     self._FilePathsToCleanup.append(FilePath)
 
   def InspectImage(self, FilePath):
-    out = subprocess.check_output((BIN_IDENTIFY, FilePath), stderr=subprocess.STDOUT)
+    out = subprocess.check_output((Binaries.Identify, FilePath), stderr=subprocess.STDOUT)
     parts = out.decode('utf-8').split(' ')
     ftype = parts[1]
     fsize = parts[2]
