@@ -10,3 +10,4 @@
 *.vi
 *~
 *.sass-cache
+/tmp-*

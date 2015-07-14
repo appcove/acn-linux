@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cd $(dirname $0)
+cd ..
+
+
+if ! git diff-index --quiet HEAD --; then
+	echo "You cannot have unstaged changes"
+	exit 1
+fi
+
+pwd
+
+git clone https://github.com/appcove/DocStruct.git tmp-docstruct || exit
+
+
+rsync -av --delete --include="docstruct-*" --exclude="*" tmp-docstruct/Bin/ bin
+rsync -av --delete tmp-docstruct/Python/DocStruct python3.3/
+
+
+pushd tmp-docstruct
+
+echo "...UPDATED TO THIS COMMMIT..."
+git log -1
+
+popd
+
+rm -rf tmp-docstruct
+
+echo "check to see what needs committed"
+
+
