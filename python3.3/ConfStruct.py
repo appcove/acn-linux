@@ -516,6 +516,17 @@ class Mailgun(Object):
       'Auth': ('api', self.Key),
       })
 
+class Stripe(Object):
+  class PublicKey(String):
+    pass
+  class SecretKey(String):
+    pass
+  def __repr__(self):
+    return repr({
+      'PublicKey': self.PublicKey,
+      'SecretKey': self.SecretKey,
+      })
+
 class Twilio(Object):
   class URL(String):
     pass
