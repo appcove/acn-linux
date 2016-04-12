@@ -80,7 +80,7 @@ try:
 
         print()
         print('---')
-        print("See http://www.postgresql.org/docs/9.2/static/runtime-config-resource.html")
+        print("See http://www.postgresql.org/docs/9.5/static/runtime-config-resource.html")
         print("    This should be set to up to 25% of ram for a dedicated machine.")
         print()
         SHARED_BUFFERS = GetInput_Int('Shared Buffers (MB as integer) (DEF)? ', Default=32, MinValue=1)
@@ -105,21 +105,21 @@ try:
 
         print()
         print('--- WRITING pg_hba.conf ---')
-        data = ReadSystemFile('var/lib/pgsql/9.2/data/pg_hba.conf')
+        data = ReadSystemFile(join(Config.Postgres.InstallDir, 'data/pg_hba.conf'))
         for ipr in ACCEPT_RANGES:
           data += 'host    all         all         {0}        md5\n'.format(ipr)
-        WriteSystemFile('var/lib/pgsql/9.2/data/pg_hba.conf', data)
+        WriteSystemFile(join(Config.Postgres.InstallDir, 'data/pg_hba.conf'), data)
         print('   ... done')
 
         
         print()
         print('--- WRITING postgresql.conf ---')
-        data = ReadSystemFile('var/lib/pgsql/9.2/data/postgresql.conf')
+        data = ReadSystemFile(join(Config.Postgres.InstallDir, 'data/postgresql.conf'))
         data = data.replace('{LISTEN_ADDRESSES}', "'{0}'".format(",".join(LISTEN_ADDRESSES)))
         data = data.replace('{MAX_CONNECTIONS}', str(MAX_CONNECTIONS))
         data = data.replace('{SHARED_BUFFERS}', str(SHARED_BUFFERS))
         data = data.replace('{TIMEZONE}', str(TIMEZONE))
-        WriteSystemFile('var/lib/pgsql/9.2/data/postgresql.conf', data)
+        WriteSystemFile(join(Config.Postgres.InstallDir, 'data/postgresql.conf'), data)
         print('   ... done')
         print()
       

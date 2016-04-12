@@ -378,11 +378,16 @@ def CopySystemFile(RelativePath):
 ###############################################################################
 
 def ReadSystemFile(RelativePath):
+  # Make any absolute paths relative
+  if RelativePath.startswith('/'):
+    RelativePath = RelativePath[1:]
+  
   sp = join(Path, 'os-template', RelativePath)
 
   if not exists(sp):
     raise Exception("Specified path does not exist: {0}".format(sp))
 
+  print('Reading from "{0}"'.format(sp))
   return open(sp, 'r', encoding='utf-8').read()
 
 ###############################################################################
@@ -394,6 +399,8 @@ def WriteSystemFile(RelativePath, Data):
     RelativePath = RelativePath[1:]
 
   dp = join('/', RelativePath)
+
+  print('Writing to "{0}"'.format(dp))
   open(dp, 'w', encoding='utf-8').write(Data)
 
 
