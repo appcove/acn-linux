@@ -24,13 +24,14 @@ class Config:
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
     SERVER_ACCESS_LOG = '/home/deploy/Log/nginx/access.log'
   class Postgres:
-    RepoRPM_Centos = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm'
-    RepoRPM_RHEL = 'http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-redhat92-9.2-7.noarch.rpm'
-    ServerPackage = 'postgresql92-server'
-    ClientPackage = 'postgresql92'
-    ContribPackage = 'postgresql92-contrib'
-    ServiceName = 'postgresql-9.2'
-    InstallDir = '/var/lib/pgsql/9.2'
+    RepoRPM_Oracle = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-oraclelinux95-9.5-2.noarch.rpm'
+    RepoRPM_Centos = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm'
+    RepoRPM_RHEL = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-redhat95-9.5-2.noarch.rpm'
+    ServerPackage = 'postgresql95-server'
+    ClientPackage = 'postgresql95'
+    ContribPackage = 'postgresql95-contrib'
+    ServiceName = 'postgresql-9.5'
+    InstallDir = '/var/lib/pgsql/9.5'
   class MySQL:
     ServerPackage = 'mysql-server'
     ClientPackage = 'mysql'
@@ -52,11 +53,11 @@ class Config:
       'php54-xml',
       )
   class mod_wsgi:
-    PackageList = ('python33-mod_wsgi',)
+    PackageList = ('python35u-mod_wsgi',)
   class PythonPostgres:
-    Package = 'python33-postgresql'
+    Package = 'python35u-postgresql'
   class PythonRedis:
-    PackageList = ('python33-redis', 'python33-hiredis')
+    PackageList = ('python35u-redis', 'python35u-hiredis')
 
 
 if exists('/etc/oracle-release'):

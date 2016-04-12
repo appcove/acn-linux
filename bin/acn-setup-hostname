@@ -1,7 +1,7 @@
-#!/usr/bin/python3.3
+#!/usr/bin/python3.5
 # vim:encoding=utf-8:ts=2:sw=2:expandtab
 import mmap
-from acnpython33 import *
+from acnpython35 import *
 
 try:
   print()

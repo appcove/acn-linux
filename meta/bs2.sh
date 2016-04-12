@@ -3,8 +3,8 @@
 
 pushd /opt/acn-linux
 
-echo 'Install [vim-enhanced, python33]'
-yum install -y vim-enhanced python33 --enablerepo=ius-testing
+echo 'Install [vim-enhanced, python35u]'
+yum install -y vim-enhanced python35u #--enablerepo=ius-testing
 
 F="/etc/profile.d/acn-linux.sh"
 echo "Install $F"
@@ -19,9 +19,9 @@ F="/usr/lib64/python2.6/site-packages/acn-linux.pth"
 echo "Install $F"
 echo '/opt/acn-linux/python2.6' > $F
 
-F="/usr/lib64/python3.3/site-packages/acn-linux.pth"
+F="/usr/lib64/python3.5/site-packages/acn-linux.pth"
 echo "Install $F"
-echo '/opt/acn-linux/python3.3' > $F
+echo '/opt/acn-linux/python3.5' > $F
 
 
 echo "--- Done! ---"
