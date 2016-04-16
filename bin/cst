@@ -1,5 +1,5 @@
 #!/usr/bin/python3.5
-# vim:encoding=utf-8:ts=2:sw=2:expandtab
+# vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
 import argparse
 import sys
@@ -287,7 +287,7 @@ if Errors:
   print()
   print("\033[95m== There were errors.  Here are suggestions for your Local.py ==================\033[0m")
   print()
-  print('# vim:encoding=utf-8:ts=2:sw=2:expandtab')
+  print('# vim:fileencoding=utf-8:ts=2:sw=2:expandtab')
   print()
   for name, description in Errors:
     print('\033[94m# ' + description + '\033[0m')

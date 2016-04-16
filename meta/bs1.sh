@@ -1,5 +1,5 @@
 #!/bin/bash
-# vim:encoding=utf-8:ts=2:sw=2:expandtab
+# vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
 echo 'Install EPEL'
 rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm

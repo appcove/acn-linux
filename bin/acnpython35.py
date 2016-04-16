@@ -1,4 +1,4 @@
-# vim:encoding=utf-8:ts=2:sw=2:expandtab
+# vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
 # WARNING: these may be used in scripts that import * from this script
 
@@ -76,7 +76,7 @@ else:
 # Add THIS acn-linux's python32 directory to the near-beginning of sys.path
 
 Path = dirname(abspath(sys.path[0]))
-PythonPath = join(Path, 'python3.2')
+PythonPath = join(Path, 'python3.5')
 
 try:
   sys.path.remove(PythonPath)
