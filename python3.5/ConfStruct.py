@@ -714,3 +714,13 @@ class DocStruct(Object):
 
 
 
+def GitCommit(Path):
+  import os
+  import subprocess
+  os.chdir(Path)
+  x = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
+  
+  y = subprocess.run(['git', 'describe', 'HEAD'], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
+
+  return {'ID': x, 'Name': y}
+
