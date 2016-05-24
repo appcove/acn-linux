@@ -241,6 +241,8 @@ for name in dir(ConfStruct):
   if inspect.isclass(v) and issubclass(v, ConfStruct.BaseValue):
     Globals[name] = v
 
+Globals['GitCommit'] = ConfStruct.GitCommit
+
 # Create the RootObject class 
 class RootObject(ConfStruct.Object):
   pass
