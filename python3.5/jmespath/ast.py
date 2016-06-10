@@ -1,239 +1,90 @@
-class AST(object):
-    VALUE_METHODS = []
-
-    def search(self, value):
-        pass
-
-    def _get_value_method(self, value):
-        # This will find the appropriate getter method
-        # based on the passed in value.
-        for method_name in self.VALUE_METHODS:
-            method = getattr(value, method_name, None)
-            if method is not None:
-                return method
-
-    def pretty_print(self, indent=''):
-        return super(AST, self).__repr__()
-
-    def __repr__(self):
-        return self.pretty_print()
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.__dict__ == other.__dict__)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
+# AST nodes have this structure:
+# {"type": <node type>", children: [], "value": ""}
 
 
-class SubExpression(AST):
-    """Represents a subexpression match.
-
-    A subexpression match has a parent and a child node.  A simple example
-    would be something like 'foo.bar' which is represented as::
-
-        SubExpression(Field(foo), Field(bar))
-
-    """
-    def __init__(self, parent, child):
-        self.parent = parent
-        self.child = child
-
-    def search(self, value):
-        # To evaluate a subexpression we first evaluate the parent object
-        # and then feed the match of the parent node into the child node.
-        sub_value = self.parent.search(value)
-        found = self.child.search(sub_value)
-        return found
-
-    def pretty_print(self, indent=''):
-        sub_indent = indent + ' ' * 4
-        return "%sSubExpression(\n%s%s,\n%s%s)" % (
-            indent,
-            sub_indent, self.parent.pretty_print(sub_indent),
-            sub_indent, self.child.pretty_print(sub_indent))
+def comparator(name, first, second):
+    return {'type': 'comparator', 'children': [first, second], 'value': name}
 
 
-class Field(AST):
-    VALUE_METHODS = ['get']
-
-    def __init__(self, name):
-        self.name = name
-
-    def pretty_print(self, indent=''):
-        return "%sField(%s)" % (indent, self.name)
-
-    def search(self, value):
-        method = self._get_value_method(value)
-        if method is not None:
-            return method(self.name)
+def current_node():
+    return {'type': 'current', 'children': []}
 
 
-class BaseMultiField(AST):
-    def __init__(self, nodes):
-        self.nodes = nodes
-
-    def search(self, value):
-        if value is None:
-            return None
-        method = self._get_value_method(value)
-        if method is not None:
-            return method(self.nodes)
-        else:
-            return self._multi_get(value)
-
-    def pretty_print(self, indent=''):
-        return "%s%s(%s)" % (indent, self.__class__.__name__, self.nodes)
+def expref(expression):
+    return {'type': 'expref', 'children': [expression]}
 
 
-class MultiFieldDict(BaseMultiField):
-    VALUE_METHODS = ['multi_get']
-
-    def _multi_get(self, value):
-        collected = {}
-        for node in self.nodes:
-            collected[node.key_name] = node.search(value)
-        return collected
+def function_expression(name, args):
+    return {'type': 'function_expression', 'children': args, 'value': name}
 
 
-class MultiFieldList(BaseMultiField):
-    VALUE_METHODS = ['multi_get_list']
-
-    def _multi_get(self, value):
-        collected = []
-        for node in self.nodes:
-            collected.append(node.search(value))
-        return collected
+def field(name):
+    return {"type": "field", "children": [], "value": name}
 
 
-class KeyValPair(AST):
-    def __init__(self, key_name, node):
-        self.key_name = key_name
-        self.node = node
-
-    def search(self, value):
-        return self.node.search(value)
-
-    def pretty_print(self, indent=''):
-        return "%sKeyValPair(key_name=%s, node=%s)" % (indent, self.key_name,
-                                                       self.node)
+def filter_projection(left, right, comparator):
+    return {'type': 'filter_projection', 'children': [left, right, comparator]}
 
 
-class Index(AST):
-    VALUE_METHODS = ['get_index', '__getitem__']
-
-    def __init__(self, index):
-        self.index = index
-
-    def pretty_print(self, indent=''):
-        return "%sIndex(%s)" % (indent, self.index)
-
-    def search(self, value):
-        # Even though we can index strings, we don't
-        # want to support that.
-        if not isinstance(value, list):
-            return None
-        method = self._get_value_method(value)
-        if method is not None:
-            try:
-                return method(self.index)
-            except IndexError:
-                pass
+def flatten(node):
+    return {'type': 'flatten', 'children': [node]}
 
 
-class WildcardIndex(AST):
-    """Represents a wildcard index.
-
-    For example::
-
-        foo[*] -> SubExpression(Field(foo), WildcardIndex())
-
-    """
-    def search(self, value):
-        return _MultiMatch(value)
-
-    def pretty_print(self, indent=''):
-        return "%sIndex(*)" % indent
+def identity():
+    return {"type": "identity", 'children': []}
 
 
-class WildcardValues(AST):
-    """Represents a wildcard on the values of a JSON object.
-
-    For example::
-
-        foo.* -> SubExpression(Field(foo), WildcardValues())
-
-    """
-    def search(self, value):
-        try:
-            return _MultiMatch(value.values())
-        except AttributeError:
-            return None
-
-    def pretty_print(self, indent=''):
-        return "%sWildcardValues()" % indent
+def index(index):
+    return {"type": "index", "value": index, "children": []}
 
 
-class _MultiMatch(list):
-    def __init__(self, elements):
-        self.extend(elements)
-
-    def get(self, value):
-        results = _MultiMatch([])
-        for element in self:
-            result = element.get(value)
-            if result is not None:
-                if isinstance(result, list):
-                    result = _MultiMatch(result)
-                results.append(result)
-        return results
-
-    def get_index(self, index):
-        matches = []
-        for el in self:
-            try:
-                matches.append(el[index])
-            except (IndexError, TypeError):
-                pass
-        if matches:
-            return _MultiMatch(matches)
-
-    def multi_get(self, nodes):
-        results = _MultiMatch([])
-        for element in self:
-            if isinstance(element, _MultiMatch):
-                result = element.multi_get(nodes)
-            else:
-                result = {}
-                for node in nodes:
-                    result[node.key_name] = node.search(element)
-            results.append(result)
-        return results
-
-    def multi_get_list(self, nodes):
-        results = _MultiMatch([])
-        for element in self:
-            if isinstance(element, _MultiMatch):
-                result = element.multi_get_list(nodes)
-            else:
-                result = []
-                for node in nodes:
-                    result.append(node.search(element))
-            results.append(result)
-        return results
+def index_expression(children):
+    return {"type": "index_expression", 'children': children}
 
 
-class ORExpression(AST):
-    def __init__(self, first, remaining):
-        self.first = first
-        self.remaining = remaining
+def key_val_pair(key_name, node):
+    return {"type": "key_val_pair", 'children': [node], "value": key_name}
 
-    def search(self, value):
-        matched = self.first.search(value)
-        if matched is None:
-            matched = self.remaining.search(value)
-        return matched
 
-    def pretty_print(self, indent=''):
-        return "%sORExpression(%s, %s)" % (indent, self.first,
-                                           self.remaining)
+def literal(literal_value):
+    return {'type': 'literal', 'value': literal_value, 'children': []}
+
+
+def multi_select_dict(nodes):
+    return {"type": "multi_select_dict", "children": nodes}
+
+
+def multi_select_list(nodes):
+    return {"type": "multi_select_list", "children": nodes}
+
+
+def or_expression(left, right):
+    return {"type": "or_expression", "children": [left, right]}
+
+
+def and_expression(left, right):
+    return {"type": "and_expression", "children": [left, right]}
+
+
+def not_expression(expr):
+    return {"type": "not_expression", "children": [expr]}
+
+
+def pipe(left, right):
+    return {'type': 'pipe', 'children': [left, right]}
+
+
+def projection(left, right):
+    return {'type': 'projection', 'children': [left, right]}
+
+
+def subexpression(children):
+    return {"type": "subexpression", 'children': children}
+
+
+def slice(start, end, step):
+    return {"type": "slice", "children": [start, end, step]}
+
+
+def value_projection(left, right):
+    return {'type': 'value_projection', 'children': [left, right]}

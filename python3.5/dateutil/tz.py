@@ -1,12 +1,11 @@
 """
 Copyright (c) 2003-2007  Gustavo Niemeyer <gustavo@niemeyer.net>
 
-This module offers extensions to the standard Python
+This module offers extensions to the standard python 2.3+
 datetime module.
 """
+__author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
-
-from six import string_types, PY3
 
 import datetime
 import struct
@@ -26,19 +25,6 @@ try:
 except (ImportError, OSError):
     tzwin, tzwinlocal = None, None
 
-def tzname_in_python2(myfunc):
-    """Change unicode output into bytestrings in Python 2
-
-    tzname() API changed in Python 3. It used to return bytes, but was changed
-    to unicode strings
-    """
-    def inner_func(*args, **kwargs):
-        if PY3:
-            return myfunc(*args, **kwargs)
-        else:
-            return myfunc(*args, **kwargs).encode()
-    return inner_func
-
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
 
@@ -50,7 +36,6 @@ class tzutc(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
 
@@ -78,7 +63,6 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._name
 
@@ -116,7 +100,6 @@ class tzlocal(datetime.tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return time.tzname[self._isdst(dt)]
 
@@ -208,12 +191,12 @@ class _ttinfo(object):
 class tzfile(datetime.tzinfo):
 
     # http://www.twinsun.com/tz/tz-link.htm
-    # ftp://ftp.iana.org/tz/tz*.tar.gz
+    # ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
     
     def __init__(self, fileobj):
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
-            fileobj = open(fileobj, 'rb')
+            fileobj = open(fileobj)
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
         else:
@@ -465,7 +448,6 @@ class tzfile(datetime.tzinfo):
         # dst offset, so I belive that this wouldn't be the right
         # way to implement this.
         
-    @tzname_in_python2
     def tzname(self, dt):
         if not self._ttinfo_std:
             return None
@@ -533,7 +515,6 @@ class tzrange(datetime.tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         if self._isdst(dt):
             return self._dst_abbr
@@ -645,7 +626,7 @@ class tzstr(tzrange):
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
-class _tzicalvtzcomp(object):
+class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                        tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -709,7 +690,6 @@ class _tzicalvtz(datetime.tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
 
@@ -718,15 +698,15 @@ class _tzicalvtz(datetime.tzinfo):
 
     __reduce__ = object.__reduce__
 
-class tzical(object):
+class tzical:
     def __init__(self, fileobj):
         global rrule
         if not rrule:
             from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
-            fileobj = open(fileobj, 'r')  # ical should be encoded in UTF-8 with CRLF
+            fileobj = open(fileobj)
         elif hasattr(fileobj, "name"):
             self._s = fileobj.name
         else:

@@ -1,0 +1,51 @@
+#!/bin/bash
+# vim:fileencoding=utf-8:ts=2:sw=2:expandtab
+
+cd $(dirname $0)
+ACN=$(dirname $PWD)
+echo $ACN
+
+# Call with package name and module name (requests, requests)
+
+PNAME=$1
+MNAME=$2
+  
+if [ -z "$PNAME" ]; then
+  echo 'Parameter 1 must be package name'
+  exit 1
+fi
+
+if [ -z "$MNAME"]; then
+  MNAME=$PNAME
+fi
+
+INSTALLPATH=$ACN/python3.5/$MNAME
+
+if [ ! -d $INSTALLPATH ]; then
+  echo "This package does not exist in $INSTALLPATH"
+  exit 1
+fi
+
+rm -rf $ACN/meta/build
+mkdir $ACN/meta/build
+
+easy_install-3.5 --build-directory $ACN/meta/build --always-copy --editable $PNAME
+
+pushd $ACN/meta/build/$PNAME
+python3.5 setup.py build
+popd
+
+if [ ! -d $ACN/meta/build/$PNAME/build/lib/$MNAME ]; then
+  echo 'Something bad went wrong; cannot install.'
+  exit 2
+fi
+
+echo
+echo "REMOVING $INSTALLPATH"
+rm -rf $INSTALLPATH
+
+echo
+echo "Installing from $ACN/meta/build/$PNAME/build/lib/$MNAME"
+mv $ACN/meta/build/$PNAME/build/lib/$MNAME $INSTALLPATH
+
+

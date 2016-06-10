@@ -1,21 +1,17 @@
 """
 Copyright (c) 2003-2010  Gustavo Niemeyer <gustavo@niemeyer.net>
 
-This module offers extensions to the standard Python
+This module offers extensions to the standard python 2.3+
 datetime module.
 """
+__author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
 
 import itertools
 import datetime
 import calendar
-try:
-    import _thread
-except ImportError:
-    import thread as _thread
+import _thread
 import sys
-
-from six import advance_iterator, integer_types
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -83,7 +79,7 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class rrulebase(object):
+class rrulebase:
     def __init__(self, cache=False):
         if cache:
             self._cache = []
@@ -116,7 +112,7 @@ class rrulebase(object):
                     break
                 try:
                     for j in range(10):
-                        cache.append(advance_iterator(gen))
+                        cache.append(next(gen))
                 except StopIteration:
                     self._cache_gen = gen = None
                     self._cache_complete = True
@@ -143,7 +139,7 @@ class rrulebase(object):
             gen = iter(self)
             try:
                 for i in range(item+1):
-                    res = advance_iterator(gen)
+                    res = next(gen)
             except StopIteration:
                 raise IndexError
             return res
@@ -236,7 +232,7 @@ class rrule(rrulebase):
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
-        super(rrule, self).__init__(cache)
+        rrulebase.__init__(self, cache)
         global easter
         if not dtstart:
             dtstart = datetime.datetime.now().replace(microsecond=0)
@@ -254,13 +250,13 @@ class rrule(rrulebase):
         self._until = until
         if wkst is None:
             self._wkst = calendar.firstweekday()
-        elif isinstance(wkst, integer_types):
+        elif isinstance(wkst, int):
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday
         if bysetpos is None:
             self._bysetpos = None
-        elif isinstance(bysetpos, integer_types):
+        elif isinstance(bysetpos, int):
             if bysetpos == 0 or not (-366 <= bysetpos <= 366):
                 raise ValueError("bysetpos must be between 1 and 366, "
                                  "or between -366 and -1")
@@ -284,14 +280,14 @@ class rrule(rrulebase):
         # bymonth
         if not bymonth:
             self._bymonth = None
-        elif isinstance(bymonth, integer_types):
+        elif isinstance(bymonth, int):
             self._bymonth = (bymonth,)
         else:
             self._bymonth = tuple(bymonth)
         # byyearday
         if not byyearday:
             self._byyearday = None
-        elif isinstance(byyearday, integer_types):
+        elif isinstance(byyearday, int):
             self._byyearday = (byyearday,)
         else:
             self._byyearday = tuple(byyearday)
@@ -299,7 +295,7 @@ class rrule(rrulebase):
         if byeaster is not None:
             if not easter:
                 from dateutil import easter
-            if isinstance(byeaster, integer_types):
+            if isinstance(byeaster, int):
                 self._byeaster = (byeaster,)
             else:
                 self._byeaster = tuple(byeaster)
@@ -309,7 +305,7 @@ class rrule(rrulebase):
         if not bymonthday:
             self._bymonthday = ()
             self._bynmonthday = ()
-        elif isinstance(bymonthday, integer_types):
+        elif isinstance(bymonthday, int):
             if bymonthday < 0:
                 self._bynmonthday = (bymonthday,)
                 self._bymonthday = ()
@@ -322,7 +318,7 @@ class rrule(rrulebase):
         # byweekno
         if byweekno is None:
             self._byweekno = None
-        elif isinstance(byweekno, integer_types):
+        elif isinstance(byweekno, int):
             self._byweekno = (byweekno,)
         else:
             self._byweekno = tuple(byweekno)
@@ -330,7 +326,7 @@ class rrule(rrulebase):
         if byweekday is None:
             self._byweekday = None
             self._bynweekday = None
-        elif isinstance(byweekday, integer_types):
+        elif isinstance(byweekday, int):
             self._byweekday = (byweekday,)
             self._bynweekday = None
         elif hasattr(byweekday, "n"):
@@ -344,7 +340,7 @@ class rrule(rrulebase):
             self._byweekday = []
             self._bynweekday = []
             for wday in byweekday:
-                if isinstance(wday, integer_types):
+                if isinstance(wday, int):
                     self._byweekday.append(wday)
                 elif not wday.n or freq > MONTHLY:
                     self._byweekday.append(wday.weekday)
@@ -362,7 +358,7 @@ class rrule(rrulebase):
                 self._byhour = (dtstart.hour,)
             else:
                 self._byhour = None
-        elif isinstance(byhour, integer_types):
+        elif isinstance(byhour, int):
             self._byhour = (byhour,)
         else:
             self._byhour = tuple(byhour)
@@ -372,7 +368,7 @@ class rrule(rrulebase):
                 self._byminute = (dtstart.minute,)
             else:
                 self._byminute = None
-        elif isinstance(byminute, integer_types):
+        elif isinstance(byminute, int):
             self._byminute = (byminute,)
         else:
             self._byminute = tuple(byminute)
@@ -382,7 +378,7 @@ class rrule(rrulebase):
                 self._bysecond = (dtstart.second,)
             else:
                 self._bysecond = None
-        elif isinstance(bysecond, integer_types):
+        elif isinstance(bysecond, int):
             self._bysecond = (bysecond,)
         else:
             self._bysecond = tuple(bysecond)
@@ -827,10 +823,10 @@ class _iterinfo(object):
 
 class rruleset(rrulebase):
 
-    class _genitem(object):
+    class _genitem:
         def __init__(self, genlist, gen):
             try:
-                self.dt = advance_iterator(gen)
+                self.dt = gen()
                 genlist.append(self)
             except StopIteration:
                 pass
@@ -839,11 +835,9 @@ class rruleset(rrulebase):
 
         def __next__(self):
             try:
-                self.dt = advance_iterator(self.gen)
+                self.dt = self.gen()
             except StopIteration:
                 self.genlist.remove(self)
-
-        next = __next__
 
         def __lt__(self, other):
             return self.dt < other.dt
@@ -854,11 +848,8 @@ class rruleset(rrulebase):
         def __eq__(self, other):
             return self.dt == other.dt
 
-        def __ne__(self, other):
-            return self.dt != other.dt
-
     def __init__(self, cache=False):
-        super(rruleset, self).__init__(cache)
+        rrulebase.__init__(self, cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
@@ -866,7 +857,7 @@ class rruleset(rrulebase):
 
     def rrule(self, rrule):
         self._rrule.append(rrule)
-
+    
     def rdate(self, rdate):
         self._rdate.append(rdate)
 
@@ -879,14 +870,14 @@ class rruleset(rrulebase):
     def _iter(self):
         rlist = []
         self._rdate.sort()
-        self._genitem(rlist, iter(self._rdate))
-        for gen in [iter(x) for x in self._rrule]:
+        self._genitem(rlist, iter(self._rdate).__next__)
+        for gen in [iter(x).__next__ for x in self._rrule]:
             self._genitem(rlist, gen)
         rlist.sort()
         exlist = []
         self._exdate.sort()
-        self._genitem(exlist, iter(self._exdate))
-        for gen in [iter(x) for x in self._exrule]:
+        self._genitem(exlist, iter(self._exdate).__next__)
+        for gen in [iter(x).__next__ for x in self._exrule]:
             self._genitem(exlist, gen)
         exlist.sort()
         lastdt = None
@@ -895,17 +886,17 @@ class rruleset(rrulebase):
             ritem = rlist[0]
             if not lastdt or lastdt != ritem.dt:
                 while exlist and exlist[0] < ritem:
-                    advance_iterator(exlist[0])
+                    next(exlist[0])
                     exlist.sort()
                 if not exlist or ritem != exlist[0]:
                     total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
-            advance_iterator(ritem)
+            next(ritem)
             rlist.sort()
         self._len = total
 
-class _rrulestr(object):
+class _rrulestr:
 
     _freq_map = {"YEARLY": YEARLY,
                  "MONTHLY": MONTHLY,
