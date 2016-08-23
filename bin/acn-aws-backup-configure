@@ -75,6 +75,9 @@ DEBUG = OPTS.Debug
 PATHLIST = []  #list of 2-tuples with (path, option)
 for p in OPTS.PathList:
   a,b,c = p.partition(':')
+  if not a.startswith('/') or a.endswith('/'):
+    parser.error('Each path should start with / and not end with / ... `{}`'.format(p))
+    
   if c in ('', 'delete'):
     PATHLIST.append((a,c))
   else:
@@ -95,7 +98,8 @@ USERPOLICY = json.dumps({
       "Effect": "Allow",
       "Action": [
         "s3:GetObject",
-        "s3:PutObject"
+        "s3:PutObject",
+        "s3:DeleteObject",
       ],
       "Resource": "arn:aws:s3:::" + BUCKET + "/" + SERVER + "/*"
     },
@@ -175,19 +179,19 @@ if ACCESS_KEY:
 
 print('paste this this command to create a syncfile as root on `{}`...'.format(SERVER))
 print()
-print('-'*80)
+print('#'+'-'*80)
 print("echo '")
 print("#!/bin/bash")
 for path,option in PATHLIST:
   if option == '':
-    print('aws s3 sync {} s3://{}/{}/'.format(path, BUCKET, SERVER))
+    print('aws s3 sync {} s3://{}/{}{}'.format(path, BUCKET, SERVER, path)) #note, path has a / at the beginning
   elif option == 'delete':
-    print('aws s3 sync --delete {} s3://{}/{}/'.format(path, BUCKET, SERVER))
+    print('aws s3 sync --delete {} s3://{}/{}{}'.format(path, BUCKET, SERVER, path)) #note, path has a / at the beginning
   else:
     raise ValueError('???')
     
 print("' > /root/backup-to-s3.sh && chmod +x /root/backup-to-s3.sh")
-print('-'*80)
+print('#'+'-'*80)
 print()
 print('Install this crontab as root on server `{}`...'.format(SERVER))
 print('-'*80)
