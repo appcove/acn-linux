@@ -44,6 +44,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-mock',            'Install/setup mock and rpmbuild'   ),
   (N(),    'acn-command', 'acn-setup-openoffice',      'Install/setup openoffice'          ),
   (N(),    'acn-command', 'acn-setup-ghostscript',     'Install/setup ghostscript'         ),
+  (N(),    'acn-command', 'acn-setup-aws',             'Install/setup aws cli and boto3'   ),
   (N(),    'acn-command', 'acn-setup-systemupdate',    'Update all packages'               ),
   ('exit', 'exit',        '',                          'Exit the program'                  ),
   ]
