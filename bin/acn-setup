@@ -41,6 +41,7 @@ CDEF = [
   (N(),    'acn-command', 'acn-setup-memcached',       'Install/setup memcached'           ),
   (N(),    'acn-command', 'acn-setup-php-memcache',    'Install/setup php-memcache'        ),
   (N(),    'acn-command', 'acn-setup-yumcron',         'Install/setup yum-cron'            ),
+  (N(),    'acn-command', 'acn-setup-logrotate',       'Install/setup logrotate'           ),
   (N(),    'acn-command', 'acn-setup-mock',            'Install/setup mock and rpmbuild'   ),
   (N(),    'acn-command', 'acn-setup-openoffice',      'Install/setup openoffice'          ),
   (N(),    'acn-command', 'acn-setup-ghostscript',     'Install/setup ghostscript'         ),

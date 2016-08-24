@@ -1,0 +1,41 @@
+#!/usr/bin/python3.5
+# vim:fileencoding=utf-8:ts=2:sw=2:expandtab
+
+from acnpython35 import *
+
+try:
+  print()
+  if not exists('/etc/.git'):
+    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
+    print()
+  
+  
+  if GetInput_YesNo('Install logrotate (DEF)? ', Default='yes'):
+    call(('yum', 'install', 'logrotate'))
+    print('   ... done')
+    print()
+
+  if GetInput_YesNo('Install Logrotate config files (DEF)? ', Default='yes'):
+    print()
+    print('--- WRITING etc/logrotate.d/nginx ---')
+    CopySystemFile('etc/logrotate.d/nginx')
+    print('--- WRITING etc/logrotate.d/httpd ---')
+    CopySystemFile('etc/logrotate.d/httpd')
+    print('--- WRITING etc/logrotate.d/home-deploy-log ---')
+    CopySystemFile('etc/logrotate.d/home-deploy-log')
+    
+  print()
+  print()
+
+
+except Exception as e:
+  print()
+  print()
+  print('*** Fatal Error ***')
+  print(e)
+  print()
+except KeyboardInterrupt:
+  print()  
+  print()
+  print('*** User Abort ***')
+  print()
