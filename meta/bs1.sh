@@ -19,7 +19,7 @@ if [ -d acn-linux ]; then
 fi
 
 echo 'Install [git]'
-yum install -y git 
+yum install -y git2u
 
 echo 'Clone acn-linux'
 git clone git://github.com/appcove/acn-linux.git
