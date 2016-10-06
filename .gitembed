@@ -1,0 +1,5 @@
+[embed "lib/PathPicker"]
+	url = https://github.com/facebook/PathPicker.git
+	path = lib/PathPicker
+	commit = a04fca3fb967e6b37591371c644ee4d7697af0ca
+
