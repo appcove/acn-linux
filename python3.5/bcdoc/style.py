@@ -24,6 +24,14 @@ class BaseStyle(object):
         self._indent = 0
         self.keep_data = True
 
+    @property
+    def indentation(self):
+        return self._indent
+
+    @indentation.setter
+    def indentation(self, value):
+        self._indent = value
+
     def new_paragraph(self):
         return '\n%s' % self.spaces()
 
@@ -186,25 +194,47 @@ class ReSTStyle(BaseStyle):
                     self.a_href = attr_value
                     self.doc.write('`')
         else:
+            # There are some model documentation that
+            # looks like this: <a>DescribeInstances</a>.
+            # In this case we just write out an empty
+            # string.
             self.doc.write(' ')
         self.doc.do_translation = True
 
     def link_target_definition(self, refname, link):
         self.doc.writeln('.. _%s: %s' % (refname, link))
 
+    def sphinx_reference_label(self, label, text=None):
+        if text is None:
+            text = label
+        if self.doc.target == 'html':
+            self.doc.write(':ref:`%s <%s>`' % (text, label))
+        else:
+            self.doc.write(text)
+
     def end_a(self):
         self.doc.do_translation = False
         if self.a_href:
             last_write = self.doc.pop_write()
             last_write = last_write.rstrip(' ')
-            if last_write:
+            if last_write and last_write != '`':
+                if ':' in last_write:
+                    last_write = last_write.replace(':', r'\:')
                 self.doc.push_write(last_write)
                 self.doc.hrefs[last_write] = self.a_href
+                self.doc.write('`_')
+            elif last_write == '`':
+                # Look at start_a().  It will do a self.doc.write('`')
+                # which is the start of the link title.  If that is the
+                # case then there was no link text.  We should just
+                # use an inline link.  The syntax of this is
+                # `<http://url>`_
+                self.doc.push_write('`<%s>`_' % self.a_href)
             else:
                 self.doc.push_write(self.a_href)
                 self.doc.hrefs[self.a_href] = self.a_href
+                self.doc.write('`_')
             self.a_href = None
-            self.doc.write('`_')
         self.doc.write(' ')
 
     def start_i(self, attrs=None):
@@ -292,3 +322,47 @@ class ReSTStyle(BaseStyle):
             else:
                 self.doc.writeln('  %s' % item)
 
+    def hidden_toctree(self):
+        if self.doc.target == 'html':
+            self.doc.write('\n.. toctree::\n')
+            self.doc.write('  :maxdepth: 1\n')
+            self.doc.write('  :hidden:\n\n')
+
+    def hidden_tocitem(self, item):
+        if self.doc.target == 'html':
+            self.tocitem(item)
+
+    def table_of_contents(self, title=None, depth=None):
+        self.doc.write('.. contents:: ')
+        if title is not None:
+            self.doc.writeln(title)
+        if depth is not None:
+            self.doc.writeln('   :depth: %s' % depth)
+
+    def start_sphinx_py_class(self, class_name):
+        self.new_paragraph()
+        self.doc.write('.. py:class:: %s' % class_name)
+        self.indent()
+        self.new_paragraph()
+
+    def end_sphinx_py_class(self):
+        self.dedent()
+        self.new_paragraph()
+
+    def start_sphinx_py_method(self, method_name, parameters=None):
+        self.new_paragraph()
+        content = '.. py:method:: %s' % method_name
+        if parameters is not None:
+            content += '(%s)' % parameters
+        self.doc.write(content)
+        self.indent()
+        self.new_paragraph()
+
+    def end_sphinx_py_method(self):
+        self.dedent()
+        self.new_paragraph()
+
+    def write_py_doc_string(self, docstring):
+        docstring_lines = docstring.splitlines()
+        for docstring_line in docstring_lines:
+            self.doc.writeln(docstring_line)

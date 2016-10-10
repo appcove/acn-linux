@@ -10,31 +10,31 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import copy
 import logging
+import functools
 
-import botocore.serialize
-import botocore.validate
 from botocore import waiter, xform_name
 from botocore.auth import AUTH_TYPE_MAPS
 from botocore.awsrequest import prepare_request_dict
-from botocore.config import Config
 from botocore.docs.docstring import ClientMethodDocstring
 from botocore.docs.docstring import PaginatorDocstring
-from botocore.endpoint import EndpointCreator
 from botocore.exceptions import ClientError, DataNotFoundError
 from botocore.exceptions import OperationNotPageableError
 from botocore.exceptions import UnknownSignatureVersionError
 from botocore.hooks import first_non_none_response
 from botocore.model import ServiceModel
 from botocore.paginate import Paginator
-from botocore.signers import RequestSigner
 from botocore.utils import CachedProperty
 from botocore.utils import fix_s3_host
 from botocore.utils import get_service_module_name
 from botocore.utils import switch_to_virtual_host_style
 from botocore.utils import switch_host_s3_accelerate
 from botocore.utils import S3_ACCELERATE_ENDPOINT
+from botocore.utils import S3RegionRedirector
+from botocore.args import ClientArgsCreator
+# Keep this imported.  There's pre-existing code that uses
+# "from botocore.client import Config".
+from botocore.config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -60,10 +60,15 @@ class ClientCreator(object):
                       client_config=None):
         service_model = self._load_service_model(service_name, api_version)
         cls = self._create_client_class(service_name, service_model)
+        endpoint_bridge = ClientEndpointBridge(
+            self._endpoint_resolver, scoped_config, client_config,
+            service_signing_name=service_model.metadata.get('signingName'))
         client_args = self._get_client_args(
             service_model, region_name, is_secure, endpoint_url,
-            verify, credentials, scoped_config, client_config)
-        return cls(**client_args)
+            verify, credentials, scoped_config, client_config, endpoint_bridge)
+        service_client = cls(**client_args)
+        self._create_s3_redirector(service_client, endpoint_bridge)
+        return service_client
 
     def create_client_class(self, service_name, api_version=None):
         service_model = self._load_service_model(service_name, api_version)
@@ -109,128 +114,20 @@ class ClientCreator(object):
         self._event_emitter.register('needs-retry.%s' % endpoint_prefix,
                                      handler, unique_id=unique_id)
 
-    def _inject_s3_configuration(self, config_kwargs, scoped_config,
-                                 client_config):
-        s3_configuration = None
-
-        # Check the scoped config first.
-        if scoped_config is not None:
-            s3_configuration = scoped_config.get('s3')
-            # Until we have proper validation of the config file (including
-            # nested types), we have to account for the fact that the s3
-            # key could be parsed as a string, e.g 's3 = foo'.
-            # In the case we'll ignore the key for now.
-            if not isinstance(s3_configuration, dict):
-                logger.debug("The s3 config key is not a dictionary type, "
-                             "ignoring its value of: %s", s3_configuration)
-                s3_configuration = None
-            # Convert logic for s3 accelerate options in the scoped config
-            # so that the various strings map to the appropriate boolean value.
-            if s3_configuration and \
-                    'use_accelerate_endpoint' in s3_configuration:
-                # Make sure any further modifications to the s3 section will
-                # not affect the scoped config by making a copy of it.
-                s3_configuration = s3_configuration.copy()
-                # Normalize on different possible values of True
-                if s3_configuration['use_accelerate_endpoint'] in [
-                        True, 'True', 'true']:
-                    s3_configuration['use_accelerate_endpoint'] = True
-                else:
-                    s3_configuration['use_accelerate_endpoint'] = False
-
-        # Next specfic client config values takes precedence over
-        # specific values in the scoped config.
-        if client_config is not None:
-            if client_config.s3 is not None:
-                if s3_configuration is None:
-                    s3_configuration = client_config.s3
-                else:
-                    # The current s3_configuration dictionary may be
-                    # from a source that only should be read from so
-                    # we want to be safe and just make a copy of it to modify
-                    # before it actually gets updated.
-                    s3_configuration = s3_configuration.copy()
-                    s3_configuration.update(client_config.s3)
-
-        config_kwargs['s3'] = s3_configuration
-
-    def _conditionally_unregister_fix_s3_host(self, endpoint_url, emitter):
-        # If the user is providing a custom endpoint, we should not alter it.
-        if endpoint_url is not None:
-            emitter.unregister('before-sign.s3', fix_s3_host)
+    def _create_s3_redirector(self, client, endpoint_bridge):
+        if client.meta.service_model.service_name != 's3':
+            return
+        S3RegionRedirector(endpoint_bridge, client).register()
 
     def _get_client_args(self, service_model, region_name, is_secure,
                          endpoint_url, verify, credentials,
-                         scoped_config, client_config):
-        service_name = service_model.endpoint_prefix
-        protocol = service_model.metadata['protocol']
-        parameter_validation = True
-        if client_config and not client_config.parameter_validation:
-            parameter_validation = False
-        elif scoped_config:
-            raw_value = str(scoped_config.get('parameter_validation', ''))
-            if raw_value.lower() == 'false':
-                parameter_validation = False
-        serializer = botocore.serialize.create_serializer(
-            protocol, parameter_validation)
-
-        event_emitter = copy.copy(self._event_emitter)
-        response_parser = botocore.parsers.create_parser(protocol)
-        endpoint_bridge = ClientEndpointBridge(
-            self._endpoint_resolver, scoped_config, client_config,
-            service_signing_name=service_model.metadata.get('signingName'))
-        endpoint_config = endpoint_bridge.resolve(
-            service_name, region_name, endpoint_url, is_secure)
-
-        # Override the user agent if specified in the client config.
-        user_agent = self._user_agent
-        if client_config is not None:
-            if client_config.user_agent is not None:
-                user_agent = client_config.user_agent
-            if client_config.user_agent_extra is not None:
-                user_agent += ' %s' % client_config.user_agent_extra
-
-        signer = RequestSigner(
-            service_name, endpoint_config['signing_region'],
-            endpoint_config['signing_name'],
-            endpoint_config['signature_version'],
-            credentials, event_emitter)
-
-        # Create a new client config to be passed to the client based
-        # on the final values. We do not want the user to be able
-        # to try to modify an existing client with a client config.
-        config_kwargs = dict(
-            region_name=endpoint_config['region_name'],
-            signature_version=endpoint_config['signature_version'],
-            user_agent=user_agent)
-        if client_config is not None:
-            config_kwargs.update(
-                connect_timeout=client_config.connect_timeout,
-                read_timeout=client_config.read_timeout)
-
-        # Add any additional s3 configuration for client
-        self._inject_s3_configuration(
-            config_kwargs, scoped_config, client_config)
-        self._conditionally_unregister_fix_s3_host(endpoint_url, event_emitter)
-
-        new_config = Config(**config_kwargs)
-        endpoint_creator = EndpointCreator(event_emitter)
-        endpoint = endpoint_creator.create_endpoint(
-            service_model, region_name=endpoint_config['region_name'],
-            endpoint_url=endpoint_config['endpoint_url'], verify=verify,
-            response_parser_factory=self._response_parser_factory,
-            timeout=(new_config.connect_timeout, new_config.read_timeout))
-
-        return {
-            'serializer': serializer,
-            'endpoint': endpoint,
-            'response_parser': response_parser,
-            'event_emitter': event_emitter,
-            'request_signer': signer,
-            'service_model': service_model,
-            'loader': self._loader,
-            'client_config': new_config
-        }
+                         scoped_config, client_config, endpoint_bridge):
+        args_creator = ClientArgsCreator(
+            self._event_emitter, self._user_agent,
+            self._response_parser_factory, self._loader)
+        return args_creator.get_client_args(
+            service_model, region_name, is_secure, endpoint_url,
+            verify, credentials, scoped_config, client_config, endpoint_bridge)
 
     def _create_methods(self, service_model):
         op_dict = {}
@@ -323,10 +220,15 @@ class ClientEndpointBridge(object):
         region_name, signing_region = self._pick_region_values(
             resolved, region_name, endpoint_url)
         if endpoint_url is None:
-            # Use the sslCommonName over the hostname for Python 2.6 compat.
-            hostname = resolved.get('sslCommonName', resolved.get('hostname'))
-            endpoint_url = self._make_url(hostname, is_secure,
-                                          resolved.get('protocols', []))
+            if self._is_s3_dualstack_mode(service_name):
+                endpoint_url = self._create_dualstack_endpoint(
+                    service_name, region_name,
+                    resolved['dnsSuffix'], is_secure)
+            else:
+                # Use the sslCommonName over the hostname for Python 2.6 compat.
+                hostname = resolved.get('sslCommonName', resolved.get('hostname'))
+                endpoint_url = self._make_url(hostname, is_secure,
+                                            resolved.get('protocols', []))
         signature_version = self._resolve_signature_version(
             service_name, resolved)
         signing_name = self._resolve_signing_name(service_name, resolved)
@@ -335,6 +237,35 @@ class ClientEndpointBridge(object):
             signing_region=signing_region, signing_name=signing_name,
             endpoint_url=endpoint_url, metadata=resolved,
             signature_version=signature_version)
+
+    def _is_s3_dualstack_mode(self, service_name):
+        if service_name != 's3':
+            return False
+        # TODO: This normalization logic is duplicated from the
+        # ClientArgsCreator class.  Consolidate everything to
+        # ClientArgsCreator.  _resolve_signature_version also has similarly
+        # duplicated logic.
+        client_config = self.client_config
+        if client_config is not None and client_config.s3 is not None and \
+                'use_dualstack_endpoint' in client_config.s3:
+            # Client config trumps scoped config.
+            return client_config.s3['use_dualstack_endpoint']
+        if self.scoped_config is None:
+            return False
+        enabled = self.scoped_config.get('s3', {}).get(
+            'use_dualstack_endpoint', False)
+        if enabled in [True, 'True', 'true']:
+            return True
+        return False
+
+    def _create_dualstack_endpoint(self, service_name, region_name,
+                                   dns_suffix, is_secure):
+        hostname = '{service}.dualstack.{region}.{dns_suffix}'.format(
+            service=service_name, region=region_name,
+            dns_suffix=dns_suffix)
+        # Dualstack supports http and https so were hardcoding this value for
+        # now.  This can potentially move into the endpoints.json file.
+        return self._make_url(hostname, is_secure, ['http', 'https'])
 
     def _assume_endpoint(self, service_name, region_name, endpoint_url,
                          is_secure):
@@ -482,9 +413,11 @@ class BaseClient(object):
         if self.meta.config.s3 is None:
             s3_addressing_style = None
             s3_accelerate = None
+            s3_dualstack = None
         else:
             s3_addressing_style = self.meta.config.s3.get('addressing_style')
             s3_accelerate = self.meta.config.s3.get('use_accelerate_endpoint')
+            s3_dualstack = self.meta.config.s3.get('use_dualstack_endpoint')
 
         # Enable accelerate if the configuration is set to to true or the
         # endpoint being used matches one of the Accelerate endpoints.
@@ -502,6 +435,11 @@ class BaseClient(object):
                 self._force_path_style_s3_addressing()
             elif s3_addressing_style == 'virtual':
                 self._force_virtual_style_s3_addressing()
+        elif s3_dualstack:
+            self.meta.events.unregister('before-sign.s3', fix_s3_host)
+            self.meta.events.register(
+                'before-sign.s3',
+                functools.partial(fix_s3_host, default_endpoint_url=None))
 
     def _force_path_style_s3_addressing(self):
         # Do not try to modify the host if path is specified. The
@@ -522,8 +460,12 @@ class BaseClient(object):
         return self.meta.service_model
 
     def _make_api_call(self, operation_name, api_params):
-        request_context = {}
         operation_model = self._service_model.operation_model(operation_name)
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input
+        }
         request_dict = self._convert_to_request_dict(
             api_params, operation_model, context=request_context)
 
@@ -580,7 +522,8 @@ class BaseClient(object):
         request_dict = self._serializer.serialize_to_request(
             api_params, operation_model)
         prepare_request_dict(request_dict, endpoint_url=self._endpoint.host,
-                             user_agent=self._client_config.user_agent)
+                             user_agent=self._client_config.user_agent,
+                             context=context)
         return request_dict
 
     def get_paginator(self, operation_name):
