@@ -708,10 +708,34 @@ class DocStruct(Object):
 
 
 
-
-
-
-
+class ACRM_AWS_Config(Object):
+  class Region(String):
+    pass
+  class Prefix(String):
+    pass
+  class AccessKeyId(String):
+    pass
+  class SecretAccessKey(String):
+    pass
+  class UserArn(String):
+    pass
+  class BucketArn(String):
+    pass
+  class BucketEventQueueArn(String):
+    pass
+  class BucketEventQueueUrl(String):
+    pass
+  def __repr__(self):
+    return repr(dict(
+      Region = self.Region,
+      Prefix = self.Prefix,
+      AccessKeyId = self.AccessKeyId,
+      SecretAccessKey = self.SecretAccessKey,
+      UserArn = self.UserArn,
+      BucketArn = self.BucketArn,
+      BucketEventQueueArn = self.BucketEventQueueArn,
+      BucketEventQueueUrl = self.BucketEventQueueUrl,
+      ))
 
 
 def GitCommit(Path):
