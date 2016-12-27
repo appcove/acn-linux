@@ -634,7 +634,7 @@ class Pusher(Object):
   class port(Port):
     Description = 'pusher.com API Port'
     Default = 80
-  class app_id(Integer):
+  class app_id(String):
     Description = 'app_id for pusher.com application'
   class key(String):
     Description = 'key for pusher.com application'
