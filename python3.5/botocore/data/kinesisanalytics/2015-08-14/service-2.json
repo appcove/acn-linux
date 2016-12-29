@@ -1,6 +1,7 @@
 {
   "version":"2.0",
   "metadata":{
+    "uid":"kinesisanalytics-2015-08-14",
     "apiVersion":"2015-08-14",
     "endpointPrefix":"kinesisanalytics",
     "jsonVersion":"1.1",
@@ -694,7 +695,10 @@
     },
     "Input":{
       "type":"structure",
-      "required":["NamePrefix"],
+      "required":[
+        "NamePrefix",
+        "InputSchema"
+      ],
       "members":{
         "NamePrefix":{
           "shape":"InAppStreamName",
@@ -1559,7 +1563,8 @@
     "UnableToDetectSchemaException":{
       "type":"structure",
       "members":{
-        "message":{"shape":"ErrorMessage"}
+        "message":{"shape":"ErrorMessage"},
+        "RawInputRecords":{"shape":"RawInputRecords"}
       },
       "documentation":"<p>Data format is not valid, Kinesis Analytics is not able to detect schema for the given streaming source.</p>",
       "exception":true

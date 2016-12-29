@@ -15,7 +15,7 @@ if [ -z "$PNAME" ]; then
   exit 1
 fi
 
-if [ -z "$MNAME"]; then
+if [ -z "$MNAME" ]; then
   MNAME=$PNAME
 fi
 

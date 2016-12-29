@@ -22,6 +22,7 @@ import xml.etree.cElementTree
 import copy
 import re
 import warnings
+import uuid
 
 from botocore.compat import unquote, json, six, unquote_str, \
     ensure_bytes, get_md5, MD5_AVAILABLE
@@ -107,6 +108,14 @@ def decode_console_output(parsed, **kwargs):
             parsed['Output'] = value
         except (ValueError, TypeError, AttributeError):
             logger.debug('Error decoding base64', exc_info=True)
+
+
+def generate_idempotent_uuid(params, model, **kwargs):
+    for name in model.idempotent_members:
+        if name not in params:
+            params[name] = str(uuid.uuid4())
+            logger.debug("injecting idempotency token (%s) into param '%s'." %
+                         (params[name], name))
 
 
 def decode_quoted_jsondoc(value):
@@ -352,26 +361,8 @@ def _quote_source_header(value):
         return percent_encode(first, safe=SAFE_CHARS + '/') + version_id
 
 
-def copy_snapshot_encrypted(params, request_signer, **kwargs):
-    # The presigned URL that facilities copying an encrypted snapshot.
-    # If the user does not provide this value, we will automatically
-    # calculate on behalf of the user and inject the PresignedUrl
-    # into the requests.
-    # The params sent in the event don't quite sync up 100% so we're
-    # renaming them here until they can be updated in the event.
-    request_dict = params
-    params = request_dict['body']
-    if 'PresignedUrl' in params:
-        # If the customer provided this value, then there's nothing for
-        # us to do.
-        return
-    destination_region = request_signer._region_name
-    params['DestinationRegion'] = destination_region
-    # The request will be sent to the destination region, so we need
-    # to create an endpoint to the source region and create a presigned
-    # url based on the source endpoint.
-    source_region = params['SourceRegion']
-
+def _get_cross_region_presigned_url(request_signer, request_dict, model,
+                                    source_region, destination_region):
     # The better way to do this is to actually get the
     # endpoint_resolver and get the endpoint_url given the
     # source region.  In this specific case, we know that
@@ -381,14 +372,57 @@ def copy_snapshot_encrypted(params, request_signer, **kwargs):
     # I think eventually we should try to plumb through something
     # that allows us to resolve endpoints from regions.
     request_dict_copy = copy.deepcopy(request_dict)
+    request_dict_copy['body']['DestinationRegion'] = destination_region
     request_dict_copy['url'] = request_dict['url'].replace(
         destination_region, source_region)
     request_dict_copy['method'] = 'GET'
     request_dict_copy['headers'] = {}
-    presigned_url = request_signer.generate_presigned_url(
+    return request_signer.generate_presigned_url(
         request_dict_copy, region_name=source_region,
-        operation_name='CopySnapshot')
-    params['PresignedUrl'] = presigned_url
+        operation_name=model.name)
+
+
+def _get_presigned_url_source_and_destination_regions(request_signer, params):
+    # Gets the source and destination regions to be used
+    destination_region = request_signer._region_name
+    source_region = params.get('SourceRegion')
+    return source_region, destination_region
+
+
+def inject_presigned_url_ec2(params, request_signer, model, **kwargs):
+    # The customer can still provide this, so we should pass if they do.
+    if 'PresignedUrl' in params['body']:
+        return
+    src, dest = _get_presigned_url_source_and_destination_regions(
+        request_signer, params['body'])
+    url = _get_cross_region_presigned_url(
+        request_signer, params, model, src, dest)
+    params['body']['PresignedUrl'] = url
+    # EC2 Requires that the destination region be sent over the wire in
+    # addition to the source region.
+    params['body']['DestinationRegion'] = dest
+
+
+def inject_presigned_url_rds(params, request_signer, model, **kwargs):
+    # SourceRegion is not required for RDS operations, so it's possible that
+    # it isn't set. In that case it's probably a local copy so we don't need
+    # to do anything else.
+    if 'SourceRegion' not in params['body']:
+        return
+
+    src, dest = _get_presigned_url_source_and_destination_regions(
+        request_signer, params['body'])
+
+    # Since SourceRegion isn't actually modeled for RDS, it needs to be
+    # removed from the request params before we send the actual request.
+    del params['body']['SourceRegion']
+
+    if 'PreSignedUrl' in params['body']:
+        return
+
+    url = _get_cross_region_presigned_url(
+        request_signer, params, model, src, dest)
+    params['body']['PreSignedUrl'] = url
 
 
 def json_decode_policies(parsed, model, **kwargs):
@@ -581,6 +615,20 @@ def document_glacier_tree_hash_checksum():
     return AppendParamDocumentation('checksum', doc).append_documentation
 
 
+def document_cloudformation_get_template_return_type(section, event_name, **kwargs):
+    if 'response-params' in event_name:
+        template_body_section = section.get_section('TemplateBody')
+        type_section = template_body_section.get_section('param-type')
+        type_section.clear_text()
+        type_section.write('(*dict*) --')
+    elif 'response-example' in event_name:
+        parent = section.get_section('structure-value')
+        param_line = parent.get_section('TemplateBody')
+        value_portion = param_line.get_section('member-value')
+        value_portion.clear_text()
+        value_portion.write('{}')
+
+
 def switch_host_machinelearning(request, **kwargs):
     switch_host_with_param(request, 'PredictEndpoint')
 
@@ -751,6 +799,8 @@ BUILTIN_HANDLERS = [
     ('after-call.cloudformation.GetTemplate', json_decode_template_body),
     ('after-call.s3.GetBucketLocation', parse_get_bucket_location),
 
+    ('before-parameter-build', generate_idempotent_uuid),
+
     ('before-parameter-build.s3', validate_bucket_name),
 
     ('before-parameter-build.s3.ListObjects',
@@ -788,7 +838,11 @@ BUILTIN_HANDLERS = [
     ('before-call.apigateway', add_accept_header),
     ('before-call.glacier.UploadArchive', add_glacier_checksums),
     ('before-call.glacier.UploadMultipartPart', add_glacier_checksums),
-    ('before-call.ec2.CopySnapshot', copy_snapshot_encrypted),
+    ('before-call.ec2.CopySnapshot', inject_presigned_url_ec2),
+    ('before-call.rds.CopyDBSnapshot',
+     inject_presigned_url_rds),
+    ('before-call.rds.CreateDBInstanceReadReplica',
+     inject_presigned_url_rds),
     ('request-created.machinelearning.Predict', switch_host_machinelearning),
     ('needs-retry.s3.UploadPartCopy', check_for_200_error, REGISTER_FIRST),
     ('needs-retry.s3.CopyObject', check_for_200_error, REGISTER_FIRST),
@@ -818,7 +872,6 @@ BUILTIN_HANDLERS = [
     ('choose-signer.cognito-idp.SetUserSettings', disable_signing),
     ('choose-signer.cognito-idp.GetJWKS', disable_signing),
     ('choose-signer.cognito-idp.DeleteUserAttributes', disable_signing),
-    ('before-sign.s3', utils.fix_s3_host),
     ('before-parameter-build.s3.HeadObject', sse_md5),
     ('before-parameter-build.s3.GetObject', sse_md5),
     ('before-parameter-build.s3.PutObject', sse_md5),
@@ -849,6 +902,9 @@ BUILTIN_HANDLERS = [
      AutoPopulatedParam('checksum').document_auto_populated_param),
     ('docs.request-params.glacier.CompleteMultipartUpload.complete-section',
      document_glacier_tree_hash_checksum()),
+    # Cloudformation documentation customizations
+    ('docs.*.cloudformation.GetTemplate.complete-section',
+     document_cloudformation_get_template_return_type),
 
     # UserData base64 encoding documentation customizations
     ('docs.*.ec2.RunInstances.complete-section',
