@@ -725,6 +725,10 @@ class ACRM_AWS_Config(Object):
     pass
   class BucketEventQueueUrl(String):
     pass
+  class SystemEventQueueArn(String):
+    pass
+  class SystemEventQueueUrl(String):
+    pass
   def __repr__(self):
     return repr(dict(
       Region = self.Region,
@@ -735,6 +739,8 @@ class ACRM_AWS_Config(Object):
       BucketArn = self.BucketArn,
       BucketEventQueueArn = self.BucketEventQueueArn,
       BucketEventQueueUrl = self.BucketEventQueueUrl,
+      SystemEventQueueArn = self.SystemEventQueueArn,
+      SystemEventQueueUrl = self.SystemEventQueueUrl,
       ))
 
 
