@@ -19,19 +19,18 @@ class Config:
   class OS:
     Name = None
   class Nginx:
-    RepoRPM = 'http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm'
     SERVER_DOCUMENT_ROOT = '/home/deploy/ServerDocumentRoot'
     SERVER_ERROR_LOG = '/home/deploy/Log/nginx/error.log'
     SERVER_ACCESS_LOG = '/home/deploy/Log/nginx/access.log'
   class Postgres:
-    RepoRPM_Oracle = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-oraclelinux95-9.5-2.noarch.rpm'
-    RepoRPM_Centos = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm'
-    RepoRPM_RHEL = 'https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-redhat95-9.5-2.noarch.rpm'
-    ServerPackage = 'postgresql95-server'
-    ClientPackage = 'postgresql95'
-    ContribPackage = 'postgresql95-contrib'
-    ServiceName = 'postgresql-9.5'
-    InstallDir = '/var/lib/pgsql/9.5'
+    RepoRPM_Oracle = 'https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-oraclelinux96-9.6-3.noarch.rpm'
+    RepoRPM_Centos = 'https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm'
+    RepoRPM_RHEL = 'https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-redhat96-9.6-3.noarch.rpm'
+    ServerPackage = 'postgresql96-server'
+    ClientPackage = 'postgresql96'
+    ContribPackage = 'postgresql96-contrib'
+    ServiceName = 'postgresql-9.6'
+    InstallDir = '/var/lib/pgsql/9.6'
   class MySQL:
     ServerPackage = 'mysql-server'
     ClientPackage = 'mysql'

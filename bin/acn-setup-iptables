@@ -80,40 +80,48 @@ try:
   if not exists('/etc/.git'):
     print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
     print()
+  
+  print()
+  if GetInput_YesNo('Rebuild Firewall (DEF)? ', Default='yes'):
 
-  print('======= ssh =========')
-  AddRules('ssh', [22])
+    print('======= ssh =========')
+    AddRules('ssh', [22])
 
-  print('======= http/https =========')
-  AddRules('http/https', [80,443])
+    print('======= http/https =========')
+    AddRules('http/https', [80,443])
 
-  print('======= mysql =========')
-  AddRules('mysql', [3306])
+    print('======= mysql =========')
+    AddRules('mysql', [3306])
 
-  print('======= postgresql =========')
-  AddRules('pgsql', [5432])
+    print('======= postgresql =========')
+    AddRules('pgsql', [5432])
 
-  print('======= samba =========')
-  AddRules('samba', [137,138,139,445], ('tcp', 'udp'))
+    print('======= samba =========')
+    AddRules('samba', [137,138,139,445], ('tcp', 'udp'))
 
 
-  IPTABLES = TEMPLATE.replace('#CUSTOM#\n', str.join('\n', RULES))
+    IPTABLES = TEMPLATE.replace('#CUSTOM#\n', str.join('\n', RULES))
 
-  ###############################################################################
+    ###############################################################################
+
+    print()
+    if GetInput_YesNo('Do you want to edit the new firewall before installing it (DEF)? ', Default='yes'):
+      IPTABLES = EditData(IPTABLES)
+
+    print()
+    if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables (DEF)? ', Default='yes'):
+      WriteFile('/etc/sysconfig/iptables', IPTABLES)
+      print(' ... done!')
 
   print()
-  if GetInput_YesNo('Do you want to edit the new firewall before installing it (DEF)? ', Default='yes'):
-    IPTABLES = EditData(IPTABLES)
-
-  print()
-  if GetInput_YesNo('Ready to install to /etc/sysconfig/iptables (DEF)? ', Default='yes'):
-    WriteFile('/etc/sysconfig/iptables', IPTABLES)
+  if GetInput_YesNo('Install iptables-services (DEF)? ', Default='yes'):
+    check_call(('yum', 'install', '-y', 'iptables-services'))
     print(' ... done!')
-
+  
   print()
   if GetInput_YesNo('Enable and restart firewall service (DEF)? ', Default='yes'):
-    check_call(('/sbin/chkconfig', 'iptables', 'on'))
-    check_call(('/sbin/service', 'iptables', 'restart'))
+    check_call(('systemctl', 'enable', 'iptables'))
+    check_call(('systemctl', 'restart', 'iptables'))
     print(' ... done!')
 
 

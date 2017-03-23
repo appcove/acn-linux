@@ -2,13 +2,13 @@
 # vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
 echo 'Install EPEL'
-rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 OS=$(lsb_release -si | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 if [[ "$OS" == *centos* ]]; then
-  rpm -Uvh https://dl.iuscommunity.org/pub/ius/stable/CentOS/6/x86_64/ius-release-1.0-14.ius.centos6.noarch.rpm 
+  rpm -Uvh https://centos7.iuscommunity.org/ius-release.rpm 
 else
-  rpm -Uvh https://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-14.ius.el6.noarch.rpm
+  rpm -Uvh https://rhel7.iuscommunity.org/ius-release.rpm
 fi
 
 echo 'cd to /opt'

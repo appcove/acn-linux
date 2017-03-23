@@ -33,12 +33,12 @@ try:
     print()
   
   if GetInput_YesNo('Setup postgresql to start automatically (DEF)? ', Default='yes'):
-    check_call(('chkconfig', Config.Postgres.ServiceName, 'on'))
+    check_call(('systemctl', 'enable', Config.Postgres.ServiceName))
     print('   ... done')
     print()
   
   if GetInput_YesNo('Initialize the postgresql database? (DEF)? ', Default='yes'):
-    check_call(('service', Config.Postgres.ServiceName, 'initdb'))
+    check_call(('/usr/pgsql-9.6/bin/postgresql96-setup', 'initdb'))
     print('   ... done')
     print()
 
@@ -88,8 +88,10 @@ try:
         while True:
           
           defaultzone = 'US/Eastern'
-          for line in open('/etc/sysconfig/clock', 'r'):
-            m = re.match('ZONE="(.+)"', 'ZONE="US/Eastern"')
+
+          for line in check_output(('timedatectl', 'status')).decode('utf-8').split('\n'):
+            print(line)
+            m = re.search('Time zone: (.+?) ', line)
             if m:
               defaultzone = m.group(1)
           
@@ -131,7 +133,7 @@ try:
 
 
   if GetInput_YesNo('Start postgresql? (DEF)? ', Default='yes'):
-    check_call(('service', Config.Postgres.ServiceName, 'restart'))
+    check_call(('systemctl', 'restart', Config.Postgres.ServiceName))
     print('   ... done')
     print()
 

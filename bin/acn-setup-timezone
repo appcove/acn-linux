@@ -23,11 +23,7 @@ try:
         print()
         continue
       
-      check_call(("sed", "--in-place", "-r", '{s/^ZONE=.*$/ZONE="'+tz.replace('/', r'\/')+'"/}', "/etc/sysconfig/clock"))
-      if Config.OS.Name == 'amazonlinux':
-        check_call(("ln", "-sf", join("/usr/share/zoneinfo", tz), "/etc/localtime"))
-      else:
-        check_call(('/usr/sbin/tzdata-update'))      
+      check_call(('timedatectl', 'set-timezone', tz))
 
       break
     pass#while

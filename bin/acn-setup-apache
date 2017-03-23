@@ -23,7 +23,7 @@ try:
       print()
   
   if GetInput_YesNo('Setup apache to start automatically (DEF)? ', Default='yes'):
-    check_call(('chkconfig', 'httpd', 'on'))
+    check_call(('systemctl', 'enable', 'httpd'))
     print('   ... done')
     print()
   
@@ -112,7 +112,7 @@ try:
     break
 
   if GetInput_YesNo('Install mod_rpaf for apache (DEF)? ', Default='yes'):
-    call(('rpm', '-i', join(Path, 'rpms', 'mod_rpaf-0.6-0.acn.el6.x86_64.rpm')))
+    call(('rpm', '-i', join(Path, 'rpms', 'mod_rpaf-0.8.4-1.el7.nux.x86_64.rpm')))
     print('   ... done')
     print()
 
@@ -138,9 +138,9 @@ try:
         RPAFproxy_ips = RPAFproxy_ips or ['127.0.0.1']
         
         print('--- WRITING rpaf.conf ---')
-        data = ReadSystemFile('etc/httpd/conf.d/rpaf.conf')
+        data = ReadSystemFile('etc/httpd/conf.d/mod_rpaf.conf')
         data = data.replace('{RPAFproxy_ips}', str.join(' ', RPAFproxy_ips))
-        WriteSystemFile('etc/httpd/conf.d/rpaf.conf', data)
+        WriteSystemFile('etc/httpd/conf.d/mod_rpaf.conf', data)
         print('   ... done')
         print()
      

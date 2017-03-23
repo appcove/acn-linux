@@ -11,7 +11,13 @@ try:
   
   
   if GetInput_YesNo('Install the official nginx yum repository (DEF)? ', Default='yes'):
-    call(("rpm", "-Uvh", Config.Nginx.RepoRPM))
+    WriteFile('/etc/yum.repos.d/nginx.repo', '''
+[nginx]
+name=nginx repo
+baseurl=http://nginx.org/packages/rhel/7/$basearch/
+gpgcheck=0
+enabled=1
+''')
     print('   ... done')
     print()
 
@@ -22,7 +28,7 @@ try:
     print()
 
   if GetInput_YesNo('Setup nginx to start automatically (DEF)? ', Default='yes'):
-    check_call(('chkconfig', 'nginx', 'on'))
+    check_call(('systemctl', 'enable', 'nginx.service'))
     print('   ... done')
     print()
 
