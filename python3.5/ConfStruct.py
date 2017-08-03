@@ -788,6 +788,8 @@ class ACRM_AWS_Config(Object):
       BucketEventQueueUrl = self.BucketEventQueueUrl,
       SystemEventQueueArn = self.SystemEventQueueArn,
       SystemEventQueueUrl = self.SystemEventQueueUrl,
+      IOUserSecretAccessKey = self.IOUserSecretAccessKey,
+      IOUserAccessKeyId = self.IOUserAccessKeyId,
       ))
 
 
