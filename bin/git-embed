@@ -283,6 +283,27 @@ elif subcommand == 'status':
   # Parse arguments
 
 ###################################################################################################
+elif subcommand in (None, 'list'):
+  
+  # Parse arguments
+  args = parser.parse_args(subcommand_args)
+
+  Embeds = GET_EMBEDS()
+  
+
+  cwd = os.getcwd()
+ 
+  print('-' * 80)
+  for Embed in Embeds:
+    print('{:60} {}'.format(Embed['path'], 'Initialized' if os.path.exists(Embed['.egit']) else '*'))
+
+
+
+
+
+  # Parse arguments
+
+###################################################################################################
 else: 
   raise ValueError('invalid subcomand: {0}'.format(subcommand))
 
