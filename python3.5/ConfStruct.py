@@ -771,6 +771,11 @@ class ACRM_AWS_Config(Object):
     pass
   class SystemEventQueueUrl(String):
     pass
+  class IOUserSecretAccessKey(String):
+    pass
+  class IOUserAccessKeyId(String):
+    pass
+
   def __repr__(self):
     return repr(dict(
       Region = self.Region,
