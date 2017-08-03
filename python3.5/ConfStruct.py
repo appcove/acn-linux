@@ -261,7 +261,9 @@ class Object(Vector):
     # Because this is and object reference, just return current instance
     return value
 
-
+  def update(self, data):
+    for k,v in data.items():
+      setattr(self, k, v)
 
   
 
@@ -649,6 +651,46 @@ class Pusher(Object):
       'secret': self.secret,
       })
 
+
+class pusher(Object):
+  Description = 'Information for connecting to pusher.com using `pusher` client (lowercase p)'
+  class app_id(String):
+    Description = 'app_id for pusher.com application'
+  class key(String):
+    Description = 'key for pusher.com application'
+  class secret(String):
+    Description = 'secret for pusher.com application'
+  class cluster(String):
+    Description = 'cluster param'
+  class ssl(Boolean):
+    Default = True
+    Description = 'ssl param'
+  def __repr__(self):
+    return repr({
+      'app_id': self.app_id,
+      'key': self.key,
+      'secret': self.secret,
+      'cluster': self.cluster,
+      'ssl': self.ssl,
+      })
+
+class Zen(Object):
+  Description = 'Information for connecting to zencoder'
+  class FullAccessKey(String):
+    Description = 'The Zen Full Access Key'
+  def __repr__(self):
+    return repr({
+      'FullAccessKey': self.FullAccessKey,
+      })
+
+class CloudConvert(Object):
+  Description = 'Information for connecting to cloudconvert.com'
+  class Key(String):
+    Description = 'The API Key'
+  def __repr__(self):
+    return repr({
+      'Key': self.Key,
+      })
 
 
 class DocStruct(Object):
