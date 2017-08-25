@@ -158,59 +158,65 @@ for line in sOut.strip().split("\n"):
 	
 
 
-
+Errors = False
 # Actually do the work
 for dl in FileList:
-	
-	print
-	dl.Print()
+	try:	
+		print
+		dl.Print()
 
-	FullPath1 = join(Path1, dl.Path1)
-	FullPath2 = join(Path2, dl.Path2)
+		FullPath1 = join(Path1, dl.Path1)
+		FullPath2 = join(Path2, dl.Path2)
 
-	print FullPath1
-	print FullPath2
+		print FullPath1
+		print FullPath2
 
-	if not exists(dirname(FullPath1)):
-		makedirs(dirname(FullPath1))
+		if not exists(dirname(FullPath1)):
+			makedirs(dirname(FullPath1))
 
-	if not exists(dirname(FullPath2)):
-		makedirs(dirname(FullPath2))
-	
-	if dl.Blob1[0:8] != '00000000' :
-		# Open File1
-		File1 = open(FullPath1, 'wb')
-		Popen(('git', 'cat-file', 'blob', dl.Blob1), stdout=File1)
-		File1.close()
+		if not exists(dirname(FullPath2)):
+			makedirs(dirname(FullPath2))
 		
-	elif Commit1 == 'WORK' and dl.Blob1[0:8] == '00000000' :
-		# Open WORK File
-		
-		WorkFile = path.abspath(getcwd()) + '/' + dl.Path1
-		#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path1
-		
-		File1 = open(FullPath1, 'wb')
-		Popen(('cat', WorkFile), stdout=File1)
-		File1.close()
-		
+		if dl.Blob1[0:8] != '00000000' :
+			# Open File1
+			File1 = open(FullPath1, 'wb')
+			Popen(('git', 'cat-file', 'blob', dl.Blob1), stdout=File1)
+			File1.close()
+			
+		elif Commit1 == 'WORK' and dl.Blob1[0:8] == '00000000' :
+			# Open WORK File
+			
+			WorkFile = path.abspath(getcwd()) + '/' + dl.Path1
+			#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path1
+			
+			File1 = open(FullPath1, 'wb')
+			Popen(('cat', WorkFile), stdout=File1)
+			File1.close()
+			
 
-	if dl.Blob2[0:8] != '00000000':
-		# Open File2
-		File2 = open(FullPath2, 'wb')
-		Popen(('git', 'cat-file', 'blob', dl.Blob2), stdout=File2)
-		File2.close()
-		
-	elif Commit2 == 'WORK' and dl.Blob2[0:8] == '00000000' :
-		# Open WORK File
-		
-		WorkFile = path.abspath(getcwd()) + '/' + dl.Path2
-		#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path2
-		
-		File2 = open(FullPath2, 'wb')
-		Popen(('cat', WorkFile), stdout=File2)
-		File2.close()
+		if dl.Blob2[0:8] != '00000000':
+			# Open File2
+			File2 = open(FullPath2, 'wb')
+			Popen(('git', 'cat-file', 'blob', dl.Blob2), stdout=File2)
+			File2.close()
+			
+		elif Commit2 == 'WORK' and dl.Blob2[0:8] == '00000000' :
+			# Open WORK File
+			
+			WorkFile = path.abspath(getcwd()) + '/' + dl.Path2
+			#WorkFile = '/home/jeff/Code/WhiteBoot4/DevLevel.2/ModEmail/' + dl.Path2
+			
+			File2 = open(FullPath2, 'wb')
+			Popen(('cat', WorkFile), stdout=File2)
+			File2.close()
 
-	# Make directories to path 1
+		# Make directories to path 1
+	except Exception as e:
+		print
+		print('-- ERRORS WITH LAST --')
+		print(e)
+		print
+		Errors = True
 
 print 
 print "#" * 100
@@ -218,7 +224,7 @@ print
 
 print "Commit 1 : {0}".format(Commit1)
 print "Commit 2 : {0}".format(Commit2)
-Popen(('tree', Path1, Path2))
+# Popen(('tree', Path1, Path2))
 
 #print FileList
 
@@ -231,7 +237,10 @@ Popen(('tree', Path1, Path2))
 
 #Path1Files = listdir(Path2)
 
-
+if Errors:
+	print
+	print '----- ERRORS WERE ENCOUNTERED ABOVE -----'
+	print
 
 
 
