@@ -27,6 +27,7 @@ import botocore.credentials
 import botocore.client
 from botocore.exceptions import ConfigNotFound, ProfileNotFound
 from botocore.exceptions import UnknownServiceError, PartialCredentialsError
+from botocore.errorfactory import ClientExceptionsFactory
 from botocore import handlers
 from botocore.hooks import HierarchicalEmitter, first_non_none_response
 from botocore.loaders import create_loader
@@ -36,6 +37,9 @@ from botocore.model import ServiceModel
 from botocore import paginate
 from botocore import waiter
 from botocore import retryhandler, translate
+
+
+logger = logging.getLogger(__name__)
 
 
 class Session(object):
@@ -164,6 +168,7 @@ class Session(object):
         self._register_endpoint_resolver()
         self._register_event_emitter()
         self._register_response_parser_factory()
+        self._register_exceptions_factory()
 
     def _register_event_emitter(self):
         self._components.register_component('event_emitter', self._events)
@@ -189,6 +194,10 @@ class Session(object):
     def _register_response_parser_factory(self):
         self._components.register_component('response_parser_factory',
                                             ResponseParserFactory())
+
+    def _register_exceptions_factory(self):
+        self._components.register_component(
+            'exceptions_factory', ClientExceptionsFactory())
 
     def _register_builtin_handlers(self, events):
         for spec in handlers.BUILTIN_HANDLERS:
@@ -253,12 +262,29 @@ class Session(object):
         value = None
         var_config = self.session_var_map[logical_name]
         if self._found_in_instance_vars(methods, logical_name):
-            return self._session_instance_vars[logical_name]
+            value = self._session_instance_vars[logical_name]
+            logger.debug(
+                "Loading variable %s from instance vars with value %r.",
+                logical_name,
+                value,
+            )
+            return value
         elif self._found_in_env(methods, var_config):
             value = self._retrieve_from_env(var_config[1], os.environ)
+            logger.debug(
+                "Loading variable %s from environment with value %r.",
+                logical_name,
+                value,
+            )
         elif self._found_in_config_file(methods, var_config):
             value = self.get_scoped_config()[var_config[0]]
+            logger.debug(
+                "Loading variable %s from config file with value %r.",
+                logical_name,
+                value,
+            )
         if value is None:
+            logger.debug("Loading variable %s from defaults.", logical_name)
             value = var_config[2]
         if var_config[3] is not None:
             value = var_config[3](value)
@@ -314,6 +340,11 @@ class Session(object):
         :param value: The value to associate with the config variable.
 
         """
+        logger.debug(
+            "Setting config variable for %s to %r",
+            logical_name,
+            value,
+        )
         self._session_instance_vars[logical_name] = value
 
     def get_scoped_config(self):
@@ -818,9 +849,11 @@ class Session(object):
         else:
             credentials = self.get_credentials()
         endpoint_resolver = self.get_component('endpoint_resolver')
+        exceptions_factory = self.get_component('exceptions_factory')
         client_creator = botocore.client.ClientCreator(
             loader, endpoint_resolver, self.user_agent(), event_emitter,
-            retryhandler, translate, response_parser_factory)
+            retryhandler, translate, response_parser_factory,
+            exceptions_factory)
         client = client_creator.create_client(
             service_name=service_name, region_name=region_name,
             is_secure=use_ssl, endpoint_url=endpoint_url, verify=verify,

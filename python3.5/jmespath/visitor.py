@@ -1,6 +1,8 @@
 import operator
 
 from jmespath import functions
+from jmespath.compat import string_type
+from numbers import Number
 
 
 def _equals(x, y):
@@ -33,9 +35,30 @@ def _is_special_integer_case(x, y):
         return x is True or x is False
 
 
+def _is_comparable(x):
+    # The spec doesn't officially support string types yet,
+    # but enough people are relying on this behavior that
+    # it's been added back.  This should eventually become
+    # part of the official spec.
+    return _is_actual_number(x) or isinstance(x, string_type)
+
+
+def _is_actual_number(x):
+    # We need to handle python's quirkiness with booleans,
+    # specifically:
+    #
+    # >>> isinstance(False, int)
+    # True
+    # >>> isinstance(True, int)
+    # True
+    if x is True or x is False:
+        return False
+    return isinstance(x, Number)
+
+
 class Options(object):
     """Options to control how a JMESPath function is evaluated."""
-    def __init__(self, dict_cls):
+    def __init__(self, dict_cls=None, custom_functions=None):
         #: The class to use when creating a dict.  The interpreter
         #  may create dictionaries during the evalution of a JMESPath
         #  expression.  For example, a multi-select hash will
@@ -45,11 +68,16 @@ class Options(object):
         #  want to set a collections.OrderedDict so that you can
         #  have predictible key ordering.
         self.dict_cls = dict_cls
+        self.custom_functions = custom_functions
 
 
 class _Expression(object):
-    def __init__(self, expression):
+    def __init__(self, expression, interpreter):
         self.expression = expression
+        self.interpreter = interpreter
+
+    def visit(self, node, *args, **kwargs):
+        return self.interpreter.visit(node, *args, **kwargs)
 
 
 class Visitor(object):
@@ -71,27 +99,28 @@ class Visitor(object):
 
 class TreeInterpreter(Visitor):
     COMPARATOR_FUNC = {
-        'le': operator.le,
+        'eq': _equals,
         'ne': lambda x, y: not _equals(x, y),
         'lt': operator.lt,
-        'lte': operator.le,
-        'eq': _equals,
         'gt': operator.gt,
+        'lte': operator.le,
         'gte': operator.ge
     }
+    _EQUALITY_OPS = ['eq', 'ne']
     MAP_TYPE = dict
 
     def __init__(self, options=None):
         super(TreeInterpreter, self).__init__()
-        self._options = options
         self._dict_cls = self.MAP_TYPE
-        if options is not None and options.dict_cls is not None:
+        if options is None:
+            options = Options()
+        self._options = options
+        if options.dict_cls is not None:
             self._dict_cls = self._options.dict_cls
-        self._functions = functions.RuntimeFunctions()
-        # Note that .interpreter is a property that uses
-        # a weakref so that the cyclic reference can be
-        # properly freed.
-        self._functions.interpreter = self
+        if options.custom_functions is not None:
+            self._functions = self._options.custom_functions
+        else:
+            self._functions = functions.Functions()
 
     def default_visit(self, node, *args, **kwargs):
         raise NotImplementedError(node['type'])
@@ -109,17 +138,30 @@ class TreeInterpreter(Visitor):
             return None
 
     def visit_comparator(self, node, value):
+        # Common case: comparator is == or !=
         comparator_func = self.COMPARATOR_FUNC[node['value']]
-        return comparator_func(
-            self.visit(node['children'][0], value),
-            self.visit(node['children'][1], value)
-        )
+        if node['value'] in self._EQUALITY_OPS:
+            return comparator_func(
+                self.visit(node['children'][0], value),
+                self.visit(node['children'][1], value)
+            )
+        else:
+            # Ordering operators are only valid for numbers.
+            # Evaluating any other type with a comparison operator
+            # will yield a None value.
+            left = self.visit(node['children'][0], value)
+            right = self.visit(node['children'][1], value)
+            num_types = (int, float)
+            if not (_is_comparable(left) and
+                    _is_comparable(right)):
+                return None
+            return comparator_func(left, right)
 
     def visit_current(self, node, value):
         return value
 
     def visit_expref(self, node, value):
-        return _Expression(node['children'][0])
+        return _Expression(node['children'][0], self)
 
     def visit_function_expression(self, node, value):
         resolved_args = []

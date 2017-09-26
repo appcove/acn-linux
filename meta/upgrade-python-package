@@ -21,15 +21,16 @@ fi
 
 INSTALLPATH=$ACN/python3.5/$MNAME
 
-if [ ! -d $INSTALLPATH ]; then
-  echo "This package does not exist in $INSTALLPATH"
-  exit 1
-fi
-
 rm -rf $ACN/meta/build
 mkdir $ACN/meta/build
 
 easy_install-3.5 --build-directory $ACN/meta/build --always-copy --editable $PNAME
+
+if [ ! -d $INSTALLPATH ]; then
+  echo "This package does not exist in $INSTALLPATH"
+  echo "Look in $ACN/meta/build"
+  exit 1
+fi
 
 pushd $ACN/meta/build/$PNAME
 python3.5 setup.py build
