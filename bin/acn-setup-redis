@@ -21,7 +21,7 @@ try:
     print('   ... done')
     print()
   
-
+  """
   while True:
     if GetInput_YesNo('Build/rebuild redis configuration (DEF)? ', Default='yes'):
       try:
@@ -38,7 +38,7 @@ try:
         print()
         continue
     break
-
+  """
 
   if GetInput_YesNo('Start redis? (DEF)? ', Default='yes'):
     check_call(('service', 'redis', 'restart'))
