@@ -39,6 +39,15 @@ try:
       check_call(('chown', '-R', 'deploy:deploy', path))
       print('   ... done')
       print()
+  
+  path = '/home/deploy/ServerDocumentRoot/.well-known/acme-challenge'
+  if not exists(path):
+    if GetInput_YesNo('Create {0} (DEF)? '.format(path), Default='yes'):
+      os.makedirs(path)
+      check_call(('chown', '-R', 'deploy:deploy', path))
+      check_call(('chmod', '777', path))
+      print('   ... done')
+      print()
 
   path = '/home/deploy/Log'
   if not exists(path):

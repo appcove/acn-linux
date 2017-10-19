@@ -11,3 +11,6 @@
 *~
 *.sass-cache
 /tmp-*
+
+# Git Embed
+.egit

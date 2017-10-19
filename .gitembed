@@ -3,3 +3,6 @@
 	path = lib/PathPicker
 	commit = a04fca3fb967e6b37591371c644ee4d7697af0ca
 
+[embed "Embed/acme-tiny"]
+	url = git@github.com:appcove/acme-tiny.git
+	path = Embed/acme-tiny
