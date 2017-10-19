@@ -11,29 +11,17 @@ try:
   
   print("hostname is: ", end='')
   sys.stdout.flush()
-  call(('/bin/hostname'))
+  call(('hostnamectl', 'status'))
   print()
   
   if not GetInput_YesNo("Do you want to set the hostname (yes)? ", Default='yes'):
     sys.exit(0)
   
   hostname = GetInput_Regex("Enter the hostname: ", Regex='^[a-zA-Z0-9-.]+$')
-  check_call(('/bin/hostname', hostname))
 
-  sysconfigfile = open('/etc/sysconfig/network')
-  hosts = mmap.mmap(sysconfigfile.fileno(), 0, access=mmap.ACCESS_READ)
-  
-  if 'HOSTNAME' in hosts:
-    check_call(('/bin/sed', '--in-place', 's/^HOSTNAME=.*/HOSTNAME=%s/' % hostname, '/etc/sysconfig/network'))
-    print()  
-    print("New contents of /etc/syconfig/network:")
-    print("---")
-    call(("cat", "/etc/sysconfig/network"))
-    print("---")
-    print()
-  else:
-    doc = open('/etc/sysconfig/network', 'a')
-    doc.write('HOSTNAME=%s'%hostname)    
+
+  check_call(('hostnamectl', 'set-hostname', hostname))  #for good
+  check_call(('hostname', hostname))  # for this session
 
 except Exception as e:
   print()
