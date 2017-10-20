@@ -30,7 +30,7 @@ def CommonNameToFileName(CommonName, Ext):
   '''
   Convert a common name to a safe file name
   '''
-  return re.sub('[^a-zA-Z0-9_]', '-', CommonName) + '.' + Ext
+  return re.sub('[^a-zA-Z0-9_]', '-', CommonName) + ('.staging' if TEST_MODE else '') + '.' + Ext
 
 def MakeAccountKey():
   KeyFile = os.path.join(DATA_PATH, 'Account.key')
