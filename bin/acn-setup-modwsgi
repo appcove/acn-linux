@@ -10,7 +10,7 @@ try:
     print()
   
   
-  if GetInput_YesNo('Install mod_wsgi for python 3.5 (DEF)? ', Default='yes'):
+  if GetInput_YesNo('Install mod_wsgi for python 3.6 (DEF)? ', Default='yes'):
     call(('yum', 'install', '--enablerepo=ius-testing') + Config.mod_wsgi.PackageList)
     print('   ... done')
     print()
@@ -20,8 +20,8 @@ try:
     if GetInput_YesNo('Build/rebuild mod_wsgi configuration (DEF)? ', Default='yes'):
       try:
        
-        data = ReadSystemFile('etc/httpd/conf.d/wsgi-python3.5.conf')
-        WriteSystemFile('etc/httpd/conf.d/wsgi-python3.5.conf', data)
+        data = ReadSystemFile('etc/httpd/conf.d/wsgi-python3.6.conf')
+        WriteSystemFile('etc/httpd/conf.d/wsgi-python3.6.conf', data)
         print('   ... done')
         print()
         
@@ -29,7 +29,7 @@ try:
           if call(('service', 'httpd', 'configtest')) > 0:
             print()
             print('ERRORS were found during configest.  Will give you a chance to rebuild.')
-            print('Please note that /etc/httpd/conf.d/wsgi-python3.5.conf HAS BEEN INSTALLED.')
+            print('Please note that /etc/httpd/conf.d/wsgi-python3.6.conf HAS BEEN INSTALLED.')
             print()
             continue
 

@@ -53,11 +53,11 @@ class Config:
       'php54-xml',
       )
   class mod_wsgi:
-    PackageList = ('python35u-mod_wsgi',)
+    PackageList = ('python36u-mod_wsgi',)
   class PythonPostgres:
-    Package = 'python35u-postgresql'
+    Package = 'python36u-postgresql'
   class PythonRedis:
-    PackageList = ('python35u-redis', 'python35u-hiredis')
+    PackageList = ('python36u-redis', 'python36u-hiredis')
 
 
 if exists('/etc/oracle-release'):

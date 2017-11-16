@@ -13,11 +13,11 @@ try:
   print()
 
   if GetInput_YesNo('Do you want to install prerequsites for `bpython` (yes)? ', Default='yes'):
-    call(('yum', 'install', 'python35u-setuptools', 'python35u-devel', 'gcc'))
+    call(('yum', 'install', '-y', 'python36u-setuptools', 'python36u-devel', 'gcc'))
     print()
 
   if GetInput_YesNo('Do you want to easy_install `bpython` (yes)? ', Default='yes'):
-    call(('easy_install-3.5', 'bpython'))
+    call(('easy_install-3.6', 'bpython'))
     print()
 
 except Exception as e:
