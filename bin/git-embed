@@ -55,6 +55,8 @@ GIT_DIR = os.path.abspath(subprocess.check_output(('git', 'rev-parse', '--show-t
 GIT_TMP = os.path.join(GIT_DIR, 'egit-tmp')
 GIT_EMBED_FILE = os.path.join(GIT_DIR, '.gitembed')
 
+
+os.chdir(GIT_DIR)
   
 ###################################################################################################
 def GET_EMBEDS():
@@ -82,6 +84,9 @@ def GET_EMBEDS():
 
     if 'path' not in Embed:
       raise ValueError('Embed must have "path" attribute: {0}'.format(Embed))
+    
+    if 'head' not in Embed:
+      raise ValueError('Embed must have "head" attribute: {0}'.format(Embed))
 
     Embed['.egit'] = os.path.join(GIT_DIR, Embed['path'], '.egit')
     Embed['repo_path'] = os.path.join(GIT_DIR, Embed['path'])
@@ -101,7 +106,7 @@ for arg in sys.argv[1:]:
   subcommand_position += 1
   if arg.startswith('-'):
     continue
-  elif arg in ('add', 'remove', 'init', 'fetch', 'status'):
+  elif arg in ('add', 'remove', 'init', 'fetch', 'update', 'status'):
     subcommand = arg
     break
   else:
@@ -158,9 +163,15 @@ if subcommand == 'add':
 
   # Clone the repo
   subprocess.check_call(('git', 'clone', url, subpath))
-
+  
   # move the .git to .egit
   subprocess.check_call(('mv', os.path.join(subpath, '.git'), os.path.join(subpath, '.egit')))
+  
+  # Get HEAD
+  head = subprocess.check_output(('git', '--git-dir', os.path.join(subpath, '.egit'), 'rev-parse', 'HEAD')).strip()
+  
+  # Save HEAD to config file
+  subprocess.check_call(('git', 'config', '--file', GIT_EMBED_FILE, 'embed.{0}.head'.format(relative_subpath), head))
   
 
 ###################################################################################################
@@ -206,6 +217,7 @@ elif subcommand == 'remove':
   # Remove the .gitembed entry  
   subprocess.call(('git', 'config', '--file', GIT_EMBED_FILE, '--unset', 'embed.{0}.url'.format(relative_subpath)))
   subprocess.call(('git', 'config', '--file', GIT_EMBED_FILE, '--unset', 'embed.{0}.path'.format(relative_subpath)))
+  subprocess.call(('git', 'config', '--file', GIT_EMBED_FILE, '--unset', 'embed.{0}.head'.format(relative_subpath)))
 
   
 
@@ -237,6 +249,9 @@ elif subcommand == 'init':
         subprocess.check_call(('mkdir', GIT_TMP))
         subprocess.check_call(('git', 'clone', Embed['url'], repo_path))
         subprocess.check_call(('mv', os.path.join(repo_path, '.git'), Embed['.egit'])) 
+        os.chdir(Embed['repo_path'])
+        subprocess.call(('egit', 'reset', '--mixed', Embed['head']))
+
       finally:
         subprocess.call(('rm', '-rf', GIT_TMP)) 
 
@@ -277,6 +292,33 @@ elif subcommand == 'status':
       print()
 
 
+###################################################################################################
+elif subcommand == 'update':
+  
+  # Parse arguments
+  args = parser.parse_args(subcommand_args)
+
+  Embeds = GET_EMBEDS()
+  
+
+  cwd = os.getcwd()
+ 
+  for Embed in Embeds:
+    if os.path.exists(Embed['.egit']):
+      os.chdir(Embed['repo_path'])
+      try:
+        print('-' * 80)
+        print('Updating "{}" to {}:'.format(Embed['path'], Embed['head']))
+        print()
+        subprocess.call(('egit', 'fetch'))
+        subprocess.call(('egit', 'reset', '--mixed', Embed['head']))
+        subprocess.call(('egit', 'status'))
+        print()
+      finally:
+        os.chdir(cwd)
+    else:
+      print('SKIPPING "{0}" because it is not initialized.'.format(Embed['path']))
+      print()
 
 
 
@@ -293,9 +335,8 @@ elif subcommand in (None, 'list'):
 
   cwd = os.getcwd()
  
-  print('-' * 80)
   for Embed in Embeds:
-    print('{:60} {}'.format(Embed['path'], 'Initialized' if os.path.exists(Embed['.egit']) else '*'))
+    print('{:40}  {}   {}'.format(Embed['path'], Embed['head'], 'Initialized' if os.path.exists(Embed['.egit']) else '*'))
 
 
 

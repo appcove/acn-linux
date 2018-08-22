@@ -38,9 +38,18 @@ if not REPO_BASE:
   sys.exit(1)
 
 
+relative_subpath = REPO_BASE[len(GIT_DIR)+1:]
+
 os.environ['GIT_DIR'] = EGIT_PATH
 os.environ['GIT_WORK_TREE'] = REPO_BASE
 
-sys.exit(subprocess.call(['git'] + sys.argv[1:]))
+returncode = subprocess.call(['git'] + sys.argv[1:])
+
+head = subprocess.check_output(('git', 'rev-parse', 'HEAD')).strip()
+  
+if {'reset', 'checkout', 'commit', 'merge'} & set(sys.argv[1:]):
+  subprocess.check_call(('git', 'config', '--file', GIT_EMBED_FILE, 'embed.{0}.head'.format(relative_subpath), head))
+
+sys.exit(returncode)
 
 
