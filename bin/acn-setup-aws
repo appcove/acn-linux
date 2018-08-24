@@ -11,12 +11,12 @@ try:
   
   
   if GetInput_YesNo('Install or update `awscli` (NOTE: Might take a minute) (DEF)? ', Default='yes'):
-    call(('easy_install-3.5', 'awscli'))
+    call(('easy_install-3.6', 'awscli'))
     print('   ... done')
     print()
   
   if GetInput_YesNo('Install or update `boto3` (DEF)? ', Default='yes'):
-    call(('easy_install-3.5', 'boto3'))
+    call(('easy_install-3.6', 'boto3'))
     print('   ... done')
     print()
   
