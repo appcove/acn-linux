@@ -19,7 +19,7 @@ if [ -z "$MNAME" ]; then
   MNAME=$PNAME
 fi
 
-INSTALLPATH=$ACN/python3.5/$MNAME
+INSTALLPATH=$ACN/python3.6/$MNAME
 
 rm -rf $ACN/meta/build
 mkdir $ACN/meta/build
@@ -33,7 +33,7 @@ if [ ! -d $INSTALLPATH ]; then
 fi
 
 pushd $ACN/meta/build/$PNAME
-python3.5 setup.py build
+python3.6 setup.py build
 popd
 
 if [ ! -d $ACN/meta/build/$PNAME/build/lib/$MNAME ]; then

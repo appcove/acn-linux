@@ -1,7 +1,7 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3.6
 # vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
-from acnpython35 import *
+from acnpython36 import *
 
 from collections import OrderedDict
 

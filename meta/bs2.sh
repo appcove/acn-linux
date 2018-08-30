@@ -3,8 +3,8 @@
 
 pushd /opt/acn-linux
 
-echo 'Install [vim-enhanced, python35u]'
-yum install -y vim-enhanced python35u #--enablerepo=ius-testing
+echo 'Install [vim-enhanced, python36u]'
+yum install -y vim-enhanced python36u python36u-devel.x86_64 python36u-libs python36u-pip python36u-redis python36u-setuptools python36u-tkinter.x86_64	python36u-tools
 
 F="/etc/profile.d/acn-linux.sh"
 echo "Install $F"
@@ -15,13 +15,9 @@ echo "Install $F"
 echo 'alias vi=vim' > $F
 echo 'export EDITOR=/usr/bin/vim'
 
-F="/usr/lib64/python2.6/site-packages/acn-linux.pth"
+F="/usr/lib64/python3.6/site-packages/acn-linux.pth"
 echo "Install $F"
-echo '/opt/acn-linux/python2.6' > $F
-
-F="/usr/lib64/python3.5/site-packages/acn-linux.pth"
-echo "Install $F"
-echo '/opt/acn-linux/python3.5' > $F
+echo '/opt/acn-linux/python3.6' > $F
 
 
 echo "--- Done! ---"
