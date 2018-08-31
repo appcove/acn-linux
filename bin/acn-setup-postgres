@@ -21,7 +21,11 @@ try:
     elif Config.OS.Name == 'oracle':
       call(("rpm", "-Uvh", Config.Postgres.RepoRPM_Oracle))
     else:
-      raise Exception('OS unknown')
+      if GetInput_YesNo('UNKNOWN OS.  Use Redhat? (DEF)? ', Default='yes'):
+        call(("rpm", "-Uvh", Config.Postgres.RepoRPM_RHEL))
+      else:
+        raise Exception('Unknown OS')
+   
 
     print('   ... done')
     print()
