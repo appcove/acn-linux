@@ -1,5 +1,0 @@
-
-
-BinPath=`dirname $0`
-
-

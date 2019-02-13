@@ -1,5 +1,5 @@
 #!/bin/bash
 
+./reload
 
-if [ -x ./reload ]; then ./reload; else find ./ -name "*.wsgi" | xargs touch && tail -f apache-error.log --lines=0; fi;
 

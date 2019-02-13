@@ -1,7 +1,7 @@
-#!/usr/bin/python3.6
+#!/usr/bin/python3
 # vim:fileencoding=utf-8:ts=2:sw=2:expandtab
 
-from acnpython36 import *
+from binlib import *
 from getpass import getpass
 
 try:

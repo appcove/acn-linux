@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cd /etc; git add . && git add -u && git commit -m "Automatic Commit"
-

@@ -1,1 +1,29 @@
-git-symmetric-difference
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	echo "Usage: $0 ref1 ref2"
+	exit 1
+fi
+
+if [ -z "$2" ]; then
+	echo "Usage: $0 ref1 ref2"
+	exit 1
+fi
+
+
+echo "-------------------------------------------------------------------------------"
+echo "Commits unique to $1"
+echo
+git --no-pager log --pretty=format:"%Cgreen%h%Creset %Cred(%an)%Creset [%ad] %Cblue%s%Creset " $1 ^$2
+echo
+echo "-------------------------------------------------------------------------------"
+echo "Commits unique to $2"
+echo
+git --no-pager log --pretty=format:"%Cgreen%h%Creset %Cred(%an)%Creset [%ad] %Cblue%s%Creset " $2 ^$1
+echo
+echo "-------------------------------------------------------------------------------"
+echo "Common Ancestor of $1 and $2"
+echo
+git --no-pager log -1 `git merge-base $1 $2`
+echo
+echo "-------------------------------------------------------------------------------"

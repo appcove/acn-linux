@@ -3,18 +3,18 @@
 
 from binlib import *
 
+user = 'root'
+
 try:
   print()
-  if not exists('/etc/.git'):
-    print('WARNING: /etc not tracked by .git. Please abort and run `acn-setup-etcgit`.')
-    print()
-
-
-  if GetInput_YesNo('Do you want to install the acn version of /etc/vimrc (yes)? ', Default='yes'):
-    CopySystemFile('etc/vimrc')
-    print(' ... done')
+  os.chdir(Path) #Important for git commands
 
   
+  call(('git', 'fetch'))
+    
+  if GetInput_YesNo('Do you want to rebase "{0}" to the latest master? (DEF)? '.format(Path), Default='yes'):
+    check_call(('git', 'rebase', 'origin/master'))
+
 
 except Exception as e:
   print()
