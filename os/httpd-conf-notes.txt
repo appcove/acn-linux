@@ -1,0 +1,43 @@
+# httpd needs to listen on 127.0.0.1:8000 by default (NOT 80)
+Listen 127.0.0.1:8000
+
+
+# --
+# Append this to the end of the more-or-less stock httpd.conf
+
+LogFormat "{\
+\"ts\":\"%t\",\
+\"cs\":\"%{ClientSession}n\",\
+\"ci\":\"%a\",\
+\"ri\":\"%{UNIQUE_ID}e\",\
+\"rl\":\"%r\",\
+\"rh\":\"%{Host}i\",\
+\"rs\":\"%{Scheme}i\",\
+\"et\":%D,\
+\"eb\":%B,\
+\"es\":\"%>s\",\
+\"er\":\"%{Location}o\",\
+\"qc\":\"%{QueryCount}n\",\
+\"qt\":\"%{QueryTime}n\",\
+\"af\":\"%{AppForm}n\",\
+\"ac\":\"%{AppController}n\",\
+\"av\":\"%{AppVersion}n\",\
+\"ad\":\"%{AppData}n\",\
+\"ch\":\"%{CacheHit}n\",\
+\"cm\":\"%{CacheMiss}n\"\
+}" JSON_ACCESS_LOG
+
+# ^^^ Note last item has no comma ^^^
+# See: http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats
+
+# For security reasons, starting with version 2.0.46, non-printable and 
+# other special characters in %r, %i and %o are escaped using \xhh 
+# sequences, where hh stands for the hexadecimal representation of the 
+# raw byte. Exceptions from this rule are " and \, which are escaped by 
+# prepending a backslash, and all whitespace characters, which are 
+# written in their C-style notation (\n, \t, etc)
+
+
+
+
+IncludeOptional conf.virtualhost.d/*.conf
