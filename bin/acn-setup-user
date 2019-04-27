@@ -50,8 +50,8 @@ try:
     call(('/bin/chown', user+':'+user, join(sshdir, 'authorized_keys')))
 
   # run visudo
-  if GetInput_YesNo("Run visudo (DEF)? ", Default='no'):
-    call(('/usr/sbin/visudo'))
+  if GetInput_YesNo("Add user to `wheel` group so they can run sudo commands? (DEF)? ", Default='no'):
+    call(('usermod', '-a', '-G', 'wheel', user))
   
     
 except Exception as e:
