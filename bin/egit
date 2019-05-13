@@ -47,7 +47,7 @@ returncode = subprocess.call(['git'] + sys.argv[1:])
 
 head = subprocess.check_output(('git', 'rev-parse', 'HEAD')).strip()
   
-if {'reset', 'checkout', 'commit', 'merge', 'rebase', 'ff'} & set(sys.argv[1:]):
+if {'reset', 'checkout', 'commit', 'merge', 'rebase', 'ff', 'cherry-pick'} & set(sys.argv[1:]):
   subprocess.check_call(('git', 'config', '--file', GIT_EMBED_FILE, 'embed.{0}.head'.format(relative_subpath), head))
 
 sys.exit(returncode)
