@@ -54,6 +54,7 @@ from collections import defaultdict, OrderedDict
 GIT_DIR = os.path.abspath(subprocess.check_output(('git', 'rev-parse', '--show-toplevel'))[0:-1].decode('utf-8'))
 GIT_TMP = os.path.join(GIT_DIR, 'egit-tmp')
 GIT_EMBED_FILE = os.path.join(GIT_DIR, '.gitembed')
+PROJECT_DIRNAME = os.path.basename(GIT_DIR)
 
 
 os.chdir(GIT_DIR)
@@ -251,6 +252,8 @@ elif subcommand == 'init':
         subprocess.check_call(('mv', os.path.join(repo_path, '.git'), Embed['.egit'])) 
         os.chdir(Embed['repo_path'])
         subprocess.call(('egit', 'reset', '--mixed', Embed['head']))
+        subprocess.call(('egit', 'checkout', '-b', PROJECT_DIRNAME))
+        subprocess.call(('egit', 'branch', '-D', 'master'))
 
       finally:
         subprocess.call(('rm', '-rf', GIT_TMP)) 
