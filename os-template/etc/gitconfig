@@ -1,0 +1,37 @@
+
+[color]
+        diff = auto
+        status = auto
+        branch = auto
+        interactive = auto
+        ui = true
+        pager = true
+
+[color "branch"]
+        current = yellow reverse
+        local = yellow
+        remote = green
+
+[color "diff"]
+        meta = yellow bold
+        frag = magenta bold
+        old = red bold
+        new = green bold
+
+[color "status"]
+        added = yellow
+        changed = green
+        untracked = cyan
+
+[core]
+        pager = less -FRSX
+		autocrlf = input
+
+[alias]
+        co = checkout
+        st = status
+        su = submodule update
+	ff = merge --ff-only
+	gl = log --graph --all
+	dif = diff --word-diff=color
+
