@@ -2,6 +2,11 @@
 
 import subprocess
 import time
+from binlib import *
+
+if not GetInput_YesNo("Save Redis, Shutdown and Restart this server (no)? ", Default='no'):
+  print('Shutdown ABORTED')
+  sys.exit(0)
 
 print('Stopping MySQL')
 subprocess.check_call(('systemctl', 'stop', 'mysql'))
