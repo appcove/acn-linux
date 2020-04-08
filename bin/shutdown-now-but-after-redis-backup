@@ -1,0 +1,30 @@
+#!/usr/bin/python3.7
+
+import subprocess
+import time
+
+print('Stopping MySQL')
+subprocess.check_call(('systemctl', 'stop', 'mysql'))
+
+# Grab last redis save to compare to
+prevsave = subprocess.check_output(('redis-cli', 'lastsave'))
+print(f'Previous save - {prevsave}')
+
+# Save redis
+output = subprocess.check_output(('redis-cli', 'bgsave'))
+print(f'Save redis - {output}')
+
+while True:
+
+  lastsave = subprocess.check_output(('redis-cli', 'lastsave'))
+  print(f'Lastsave {lastsave}')
+
+  if lastsave != prevsave :
+    break
+
+  time.sleep(.1)
+
+print()
+print('Shutdown')
+subprocess.check_output(('shutdown', '-r', 'now'))
+
