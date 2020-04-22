@@ -38,6 +38,9 @@ LogFormat "{\
 # written in their C-style notation (\n, \t, etc)
 
 
+# For nginx proxy forwarding
+RemoteIPHeader X-Forwarded-For
+RemoteIPInternalProxy 127.0.0.1/32
 
 
 IncludeOptional conf.virtualhost.d/*.conf
