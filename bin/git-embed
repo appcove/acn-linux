@@ -55,7 +55,8 @@ GIT_DIR = os.path.abspath(subprocess.check_output(('git', 'rev-parse', '--show-t
 GIT_TMP = os.path.join(GIT_DIR, 'egit-tmp')
 GIT_EMBED_FILE = os.path.join(GIT_DIR, '.gitembed')
 PROJECT_DIRNAME = os.path.basename(GIT_DIR)
-
+GIT_COMMIT = subprocess.check_output(('git', 'rev-parse', 'HEAD')).strip().decode('utf-8')
+IS_GIT_EMBED_MODIFIED = '.gitembed' in subprocess.check_output(('git', 'status', '--porcelain')).decode('utf-8')
 
 os.chdir(GIT_DIR)
   
@@ -107,7 +108,7 @@ for arg in sys.argv[1:]:
   subcommand_position += 1
   if arg.startswith('-'):
     continue
-  elif arg in ('add', 'remove', 'init', 'fetch', 'update', 'status'):
+  elif arg in ('add', 'remove', 'init', 'fetch', 'update', 'status', 'tag'):
     subcommand = arg
     break
   else:
@@ -287,6 +288,38 @@ elif subcommand == 'status':
         print('Status for "{0}":'.format(Embed['path']))
         print()
         subprocess.call(('egit', 'status'))
+        print()
+      finally:
+        os.chdir(cwd)
+    else:
+      print('SKIPPING "{0}" because it is not initialized.'.format(Embed['path']))
+      print()
+
+
+###################################################################################################
+elif subcommand == 'tag':
+  
+  # Parse arguments
+  args = parser.parse_args(subcommand_args)
+
+  Embeds = GET_EMBEDS()
+  
+  if IS_GIT_EMBED_MODIFIED:
+    subprocess.call(('git', 'status'))
+    raise Exception('.gitembed is dirty.  Please commit this first.')
+
+  cwd = os.getcwd()
+ 
+  for Embed in Embeds:
+    if os.path.exists(Embed['.egit']):
+      os.chdir(Embed['repo_path'])
+      tag_name = f'{PROJECT_DIRNAME}.{GIT_COMMIT}'
+      try:
+        print('-' * 80)
+        print(f'Tagging {Embed["path"]} as {tag_name}')
+        print()
+        subprocess.call(('egit', 'tag', tag_name))
+        subprocess.call(('egit', 'push', '--tags'))
         print()
       finally:
         os.chdir(cwd)
