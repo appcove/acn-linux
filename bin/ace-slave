@@ -49,6 +49,19 @@ class BaseCommand():
     CommandMap[cls.__name__] = cls
 
 ###################################################################################################
+class ACE_Check_v1(BaseCommand):
+  def __new__(cls, Data):
+    
+    RVAL = {}
+    RVAL['acn-linux.status'] = subprocess.check_output(('git', '-C', '/opt/acn-linux', 'status', '--porcelain')).decode('utf-8')
+    RVAL['acn-linux.log1'] = subprocess.check_output(('git', '-C', '/opt/acn-linux', 'log', '-1')).decode('utf-8')
+    RVAL['acn-linux.HEAD'] = subprocess.check_output(('git', '-C', '/opt/acn-linux', 'rev-parse', 'HEAD')).decode('utf-8')
+    RVAL['acn-linux.ace-slave.IsDirty'] = 'ace-slave' in RVAL['acn-linux.status']
+
+    sys.stdout.write(json.dumps(RVAL) + "\n")
+
+
+###################################################################################################
 
 class PostgreSQL_Dump_v1(BaseCommand):
   def __new__(cls, Data):
@@ -58,6 +71,7 @@ class PostgreSQL_Dump_v1(BaseCommand):
 
     subprocess.check_call(('pg_dump', '--format=custom', Database))
 
+###################################################################################################
 class PostgreSQL_Load_v1(BaseCommand):
   '''
   stdin will be the pgdump stream to run through pg_restore
@@ -74,8 +88,8 @@ class PostgreSQL_Load_v1(BaseCommand):
     if not IS_PG_IDENTIFIER(Role):
       raise ValueError(f'Invalid role name: {Role}')
     
-    if ('-0' in Database or '_0 in Database') and not Dev0:
-      raise ValueError(f'Refuse to run on 0 database: {Database}.  Pass {..., Dev0: True} to force')
+    if ('-0' in Database or '_0' in Database) and not Dev0:
+      raise ValueError(f'Refuse to run on 0 database: {Database}.  Pass {{..., Dev0: True}} to force')
 
     TempDatabase = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S') + '-' + Database 
 
