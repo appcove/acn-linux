@@ -80,6 +80,7 @@ class PostgreSQL_Load_v1(BaseCommand):
   def __new__(cls, Data):
     Database = Data['Database']
     Role = Data['Role']
+    RolePassword = Data.get('RolePassword')
     Dev0 = Data.get('Dev0')
     
     if not IS_PG_IDENTIFIER(Database):
@@ -87,6 +88,10 @@ class PostgreSQL_Load_v1(BaseCommand):
     
     if not IS_PG_IDENTIFIER(Role):
       raise ValueError(f'Invalid role name: {Role}')
+    
+    if RolePassword is not None:
+      if not IS_PG_IDENTIFIER(RolePassword):
+        raise ValueError(f'Invalid role password name: {RolePassword}')
     
     if ('-0' in Database or '_0' in Database) and not Dev0:
       raise ValueError(f'Refuse to run on 0 database: {Database}.  Pass {{..., Dev0: True}} to force')
@@ -104,24 +109,29 @@ class PostgreSQL_Load_v1(BaseCommand):
     p1.stdout.close()
     p2.communicate()[0]
 
-    # SECURITY: Database, TempDatabase, and Role were checked to be valid identifiers above
+    # SECURITY: [Role, RolePassword] checked to be valid identifiers above
+    if RolePassword is not None:
+      sql = ('''
+        CREATE ROLE IF NOT EXISTS "{Role}" LOGIN;
+        ALTER ROLE "{Role}" SET PASSWORD '{RolePassword}';
+        ''').format(Role=Role, RolePassword=RolePassword)
+      sys.stderr.write(sql)
+      subprocess.run(('psql', TempDatabase), input=sql.encode('utf-8'), check=True)
+
+    # SECURITY: [Role] checked to be valid identifiers above
     sql = ('''
       REASSIGN OWNED BY root TO "{Role}";
       ''').format(Role=Role)
-
     sys.stderr.write(sql)
-
     subprocess.run(('psql', TempDatabase), input=sql.encode('utf-8'), check=True)
     
-    # SECURITY: Database, TempDatabase, and Role were checked to be valid identifiers above
+    # SECURITY: [TempDatabase, TempDatabaseDelete, Database] were checked to be valid identifiers above
     sql = ('''
       SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='{Database}';
       ALTER DATABASE "{Database}" RENAME TO "{TempDatabaseDelete}" ;
       ALTER DATABASE "{TempDatabase}" RENAME TO "{Database}" ;
       ''').format(TempDatabase=TempDatabase, TempDatabaseDelete=TempDatabaseDelete, Database=Database)
-
     sys.stderr.write(sql)
-
     subprocess.run(('psql',), input=sql.encode('utf-8'), check=True)
     
 
