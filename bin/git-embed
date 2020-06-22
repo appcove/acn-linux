@@ -48,6 +48,7 @@ import sys
 import argparse
 import subprocess
 import shutil
+import datetime
 
 from collections import defaultdict, OrderedDict
 
@@ -309,12 +310,15 @@ elif subcommand == 'tag':
     subprocess.call(('git', 'status'))
     raise Exception('.gitembed is dirty.  Please commit this first.')
 
+  dt = subprocess.check_output(('git', 'log', '-1', '--date=iso-strict', '--format=%cd', 'HEAD')).decode('utf-8').strip()
+  dt = datetime.datetime.fromisoformat(dt).strftime('%Y%m%d%H%M%S')
+
   cwd = os.getcwd()
  
   for Embed in Embeds:
     if os.path.exists(Embed['.egit']):
       os.chdir(Embed['repo_path'])
-      tag_name = f'{PROJECT_DIRNAME}.{GIT_COMMIT}'
+      tag_name = f'{PROJECT_DIRNAME}.{dt}.{GIT_COMMIT}'
       try:
         print('-' * 80)
         print(f'Tagging {Embed["path"]} as {tag_name}')
